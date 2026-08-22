@@ -3,7 +3,7 @@
   "channel": "stable",
   "version": "3.3.5-reviewed",
   "minSupported": "3.3.3-reviewed",
-  "url": "https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/main/releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe",
+  "url": "https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/d4b20d567e43478a4bfe4850a89662cb8b659eff/releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe",
   "sha256": "31fe17cea7b50ffd447aa13474a26791e3668edc1ad6a34ff171768e0464d4ac",
   "size": 7284224,
   "mandatory": false,
