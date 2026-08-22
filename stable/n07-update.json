@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "channel": "stable",
+  "version": "3.3.5-reviewed",
+  "minSupported": "3.3.3-reviewed",
+  "url": "https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/main/releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe",
+  "sha256": "31fe17cea7b50ffd447aa13474a26791e3668edc1ad6a34ff171768e0464d4ac",
+  "size": 7284224,
+  "mandatory": false,
+  "releaseNotes": "N07 HUBDNI 3.3.5: managed GitHub stable channel, URL cập nhật cố định trong app, giữ Supabase primary, phân quyền 2 kho, pending-login an toàn và updater rollback hardened.",
+  "publishedAt": "2026-08-22T00:43:27Z"
+}
