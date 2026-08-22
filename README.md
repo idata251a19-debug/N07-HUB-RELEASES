@@ -14,20 +14,22 @@ stable/
 releases/
   <version>/
     N07_HUBDNI_WINDOWS_B3.exe
-    N07Updater.exe        # chỉ khi updater thay đổi
+    N07Updater.exe
     RELEASE_NOTES.md
     SHA256SUMS.txt
+    RELEASE_METADATA.json   # khi có
 ```
 
-## Quy tắc phát hành
+## Quy tắc phát hành bắt buộc
 
-1. Mỗi version dùng đường dẫn bất biến dưới `releases/<version>/`.
-2. Không ghi đè binary của version đã phát hành.
-3. Binary phải có SHA-256 và byte size được ghi trong manifest.
-4. `stable/n07-update.json` chỉ được cập nhật **sau khi** artifact version mới đã tồn tại và đã được xác minh.
-5. N07 chỉ tải qua HTTPS, kiểm byte size + SHA-256 trước khi thay EXE.
-6. Không được commit service-role key, password, Google secret, Supabase secret, source ZIP hay MASTER handoff vào repo này.
-7. Lịch sử quyết định, trạng thái production và provenance nằm trong bộ bàn giao kỹ thuật của dự án N07, không nằm ở release repo này.
+1. Mỗi version có folder riêng dưới `releases/<version>/` và **không ghi đè binary đã phát hành**.
+2. Binary phải có exact byte size + SHA-256 đã đối chiếu với artifact build authoritative.
+3. Upload/move artifact trước, verify trước, rồi mới cắt `stable/n07-update.json`.
+4. URL binary trong manifest Stable phải pin tới **Git commit SHA chứa artifact**, không trỏ `main`, để byte của release là bất biến thật.
+5. N07 chỉ tải qua HTTPS, kiểm exact size + SHA-256 trước khi thay EXE, sau đó health-check và rollback nếu bản mới lỗi.
+6. Không commit service-role key, password, Google secret, Supabase secret, source ZIP hay MASTER handoff vào repo này.
+7. Lịch sử quyết định, trạng thái production, QA/UAT và provenance nằm trong MASTER handoff của dự án N07.
+8. `stable/n07-update.json` là pointer duy nhất được phép thay đổi để chuyển Stable sang version khác.
 
 ## Kênh stable
 
@@ -35,14 +37,22 @@ Manifest cố định mà app đọc:
 
 `https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/main/stable/n07-update.json`
 
-Binary mỗi bản dùng URL bất biến, ví dụ:
+Ví dụ artifact production **đúng chuẩn commit-pinned**:
 
-`https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/main/releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe`
+`https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/<ARTIFACT_COMMIT>/releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe`
+
+Không dùng `.../main/releases/<version>/...` trong manifest Stable production.
 
 ## Rollback
 
-Nếu bản mới không health-check được, `N07Updater.exe` tự restore file backup cục bộ. Nếu cần rollback toàn hệ thống, chỉ đổi manifest stable về một version đã được kiểm chứng và vẫn còn artifact bất biến trong `releases/`.
+- Rollback cục bộ: `N07Updater.exe` restore backup nếu health-check fail.
+- Rollback Stable toàn hệ thống: đổi `stable/n07-update.json` về artifact commit/version đã được kiểm chứng.
+- Không xóa artifact version cũ đã từng được Stable trỏ tới.
+
+## Giới hạn hiện tại
+
+Manifest schema 1 của 3.3.5 quản lý **Main EXE**. `N07Updater.exe` đi cùng release nhưng 3.3.5 chưa tự rotate helper này qua manifest. Main release kế tiếp nên bổ sung helper-rotation trước khi cần thay updater production.
 
 ---
 
-N07 release-channel governance. Không xóa lịch sử version đã phát hành.
+N07 release-channel governance. Repo này là distribution plane, không phải source-of-truth của code hay dữ liệu nghiệp vụ.
