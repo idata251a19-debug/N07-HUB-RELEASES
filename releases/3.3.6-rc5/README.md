@@ -10,6 +10,6 @@ Vehicle/PIN-type catalog controls are visually prepared to match the target form
 
 Main Windows x64 SHA-256: `73d839444963a6cd4a5a5c19bd6e6de90d60025ea430fe05ecf70c52dd45096a`
 Updater SHA-256: `d9f8d1b7da255587dd00a060f0ef50478fbe70219de25e081bdf0ae6b2bf3dcb`
-AUTHOR COMPLETE ZIP SHA-256: `544343981e6163d398c5e838dcea6a066cf084c4e05c31900dd269c2bf055297`
+AUTHOR COMPLETE ZIP SHA-256: `e0f5064ba557270a4dbac09ea46d156119902f5f787b402437b303f3951923d1`
 
-Automated final review: go test/vet/race, security, SQL/migration structure, Edge typecheck, QR smoke, code health, RC5 requirements, UI smoke and UI performance PASS. Extracted package verifier PASS with 205/205 manifest entries matching.
+Automated final review: go test/vet/race, security, SQL/migration structure, Edge typecheck, QR smoke, code health, RC5 requirements, UI smoke and UI performance PASS. Source, frozen staging copy, and extracted package verifier all PASS with 205/205 manifest entries matching.
