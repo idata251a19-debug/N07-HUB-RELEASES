@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "version": "3.3.5-reviewed",
+  "channel": "stable",
+  "artifactCommit": "d4b20d567e43478a4bfe4850a89662cb8b659eff",
+  "stableManifestCommit": "39ba23d26d8e007a8417d5f8020708e5591f5e71",
+  "main": {
+    "path": "releases/3.3.5/N07_HUBDNI_WINDOWS_B3.exe",
+    "sha256": "31fe17cea7b50ffd447aa13474a26791e3668edc1ad6a34ff171768e0464d4ac",
+    "gitBlobSha": "22cea54547d8d1b81c0323c8b5ea184231f3e54c",
+    "size": 7284224
+  },
+  "updater": {
+    "path": "releases/3.3.5/N07Updater.exe",
+    "sha256": "d9f8d1b7da255587dd00a060f0ef50478fbe70219de25e081bdf0ae6b2bf3dcb",
+    "gitBlobSha": "209ef776daf1cdb6067d2a08d360d03d6e69174b",
+    "size": 5929472,
+    "selfRotationSupportedBy335": false
+  },
+  "backend": {
+    "supabaseProjectRef": "adixviiotaldvxcgshyt",
+    "edgeFunction": "n07-api-v4",
+    "edgeVersion": 5,
+    "apiVersion": 4,
+    "compatibilityBuild": "3.3.3-reviewed"
+  },
+  "notes": "Artifact bytes verified by matching GitHub blob SHA/size to authoritative local release bytes. Stable manifest pins the main binary to artifactCommit. 3.3.5 does not rotate N07Updater.exe via manifest."
+}
