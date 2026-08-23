@@ -58,8 +58,8 @@ jobs:
             rm -f app/test/widget_test.dart.bak
 
             mkdir -p app/assets/background
-            base64 -d build/background_rc16/N07_HUBDNI_BACKGROUND_VERTICAL_RC16.jpg.b64 > app/assets/background/n07_background_vertical.jpg
-            echo '5e850e3747117269be71f2a369549d56d2b2c6e7e4bbb98d720a1ae210f14b5c  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
+            base64 -d build/background_rc16/N07_HUBDNI_BACKGROUND_VERTICAL_RC16_COMPACT.jpg.b64 > app/assets/background/n07_background_vertical.jpg
+            echo '01454bb1570e5909db9cc30e714390e100c4dccf6aa57f5db848be8ec89def71  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
 
             python3 - <<'PY'
           from pathlib import Path
@@ -170,7 +170,7 @@ jobs:
         run: |
           set -euxo pipefail
           git config user.name 'github-actions[bot]'
-          git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add build-output
           git commit -m 'build: N07 Android RC16 background result [skip ci]' || true
           git push origin HEAD:${GITHUB_REF_NAME}
