@@ -74,98 +74,11 @@ Your application code is in app/lib/main.dart.
 + cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
 + cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
 + rm -f app/test/widget_test.dart.bak
++ mkdir -p app/assets/background
++ cat build/background_rc16/chunks/part00.txt build/background_rc16/chunks/part01.txt build/background_rc16/chunks/part02.txt build/background_rc16/chunks/part03.txt build/background_rc16/chunks/part04.txt
++ base64 -d /tmp/n07_bg.b64
++ echo '01454bb1570e5909db9cc30e714390e100c4dccf6aa57f5db848be8ec89def71  app/assets/background/n07_background_vertical.jpg'
++ sha256sum -c -
+app/assets/background/n07_background_vertical.jpg: OK
 + python3 -
-+ cd app
-+ flutter pub get
-Resolving dependencies...
-Downloading packages...
-+ cross_file 0.3.5+4
-+ crypto 3.0.7
-+ ffi 2.2.0
-+ file 7.0.1
-+ file_selector_linux 0.9.4
-+ file_selector_macos 0.9.5
-+ file_selector_platform_interface 2.7.0
-+ file_selector_windows 0.9.3+5
-+ flutter_plugin_android_lifecycle 2.0.35
-+ flutter_web_plugins 0.0.0 from sdk flutter
-+ http 1.6.0
-+ http_parser 4.1.2
-+ image_picker 1.2.3
-+ image_picker_android 0.8.13+19
-+ image_picker_for_web 3.1.1
-+ image_picker_ios 0.8.13+6
-+ image_picker_linux 0.2.2
-+ image_picker_macos 0.2.2+1
-+ image_picker_platform_interface 2.11.1
-+ image_picker_windows 0.2.2
-  material_color_utilities 0.13.0 (0.13.1 available)
-  meta 1.18.3 (1.19.0 available)
-+ mime 2.0.0
-+ mobile_scanner 7.4.0
-+ path_provider_linux 2.2.2
-+ path_provider_platform_interface 2.1.3
-+ path_provider_windows 2.3.0
-+ platform 3.1.6
-+ plugin_platform_interface 2.1.8
-+ shared_preferences 2.5.5
-+ shared_preferences_android 2.4.27
-+ shared_preferences_foundation 2.5.6
-+ shared_preferences_linux 2.4.1
-+ shared_preferences_platform_interface 2.4.2
-+ shared_preferences_web 2.4.3
-+ shared_preferences_windows 2.4.1
-+ sqflite 2.4.3
-+ sqflite_android 2.4.3
-+ sqflite_common 2.5.11
-+ sqflite_darwin 2.4.3+1
-+ sqflite_platform_interface 2.4.1
-+ synchronized 3.4.1+2
-  test_api 0.7.12 (0.7.13 available)
-+ typed_data 1.4.0
-  vector_math 2.4.0 (2.4.2 available)
-+ web 1.1.1
-+ xdg_directories 1.1.0
-These packages are no longer being depended on:
-- cupertino_icons 1.0.9
-Changed 44 dependencies!
-4 packages have newer versions incompatible with dependency constraints.
-Try `flutter pub outdated` for more information.
-Upgrading analysis_options.yaml to exclude build and platform directories.
-+ dart format lib test
-Formatted lib/local_store.dart
-Formatted lib/main.dart
-Formatted test/widget_test.dart
-Formatted 3 files (3 changed) in 0.28 seconds.
-+ flutter analyze
-Analyzing app...                                                
-
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/local_store.dart:742:11 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/local_store.dart:1530:9 • curly_braces_in_flow_control_structures
-   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/main.dart:24:33 • unnecessary_brace_in_string_interps
-   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/main.dart:26:6 • unnecessary_brace_in_string_interps
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:703:11 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:785:9 • curly_braces_in_flow_control_structures
-warning • The value of the local variable 'search' isn't used. Try removing the variable or using it • lib/main.dart:834:13 • unused_local_variable
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:920:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:966:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:987:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1005:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1029:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1054:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1074:11 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1077:11 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1106:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1162:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1180:9 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1273:7 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1286:9 • curly_braces_in_flow_control_structures
-   info • Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' • lib/main.dart:1617:7 • use_null_aware_elements
-warning • The value of the local variable 'data' isn't used. Try removing the variable or using it • lib/main.dart:1688:11 • unused_local_variable
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1760:7 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:9203:9 • curly_braces_in_flow_control_structures
-   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9270:14 • use_build_context_synchronously
-   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9274:14 • use_build_context_synchronously
-   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9542:14 • use_build_context_synchronously
-
-27 issues found. (ran in 8.1s)
+void main() not found
