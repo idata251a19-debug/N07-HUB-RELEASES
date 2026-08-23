@@ -1,11 +1,12 @@
 name: Build Android 16.0.6 iData Continuous Scan
 
 on:
-  push:
+  pull_request:
     branches:
-      - tmp/android-16-0-5-idata-build-20260823
+      - main
     paths:
-      - build/apk_16_0_5/pr-build-marker.txt
+      - build/**
+      - .github/workflows/build-android-rc16.yml
 
 permissions:
   contents: read
