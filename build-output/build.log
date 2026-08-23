@@ -50,6 +50,7 @@ Archive:  /tmp/android_rc16_overlay.zip
   inflating: app/test/basic_test.dart  
   inflating: app/pubspec.yaml        
 + cp app/android_override/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
++ rm -f app/test/widget_test.dart
 + python3 -
 + cd app
 + flutter pub get
@@ -88,11 +89,35 @@ Try `flutter pub outdated` for more information.
 Upgrading analysis_options.yaml to exclude build and platform directories.
 + dart format lib test
 Formatted lib/main.dart
-Formatted 3 files (1 changed) in 0.08 seconds.
+Formatted 2 files (1 changed) in 0.07 seconds.
 + flutter analyze
 Analyzing app...                                                
+No issues found! (ran in 7.2s)
++ flutter test
 
-   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre. Try replacing the use of the deprecated member with the replacement • lib/main.dart:1405:13 • deprecated_member_use
-  error • The name 'MyApp' isn't a class. Try correcting the name to match an existing class • test/widget_test.dart:16:35 • creation_with_non_type
+::group::✅ Passing tests
+✅ keeps both N07 battery warehouses
+✅ user permission remains warehouse-scoped
+::endgroup::
 
-2 issues found. (ran in 7.3s)
+🎉 2 tests passed.
++ flutter build apk --release
+Upgrading build.gradle.kts
+Running Gradle task 'assembleRelease'...                        
+WARNING: Your app uses the following plugins that apply Kotlin Gradle Plugin (KGP): mobile_scanner
+Future versions of Flutter will fail to build if your app uses plugins that apply KGP.
+
+Please check the changelogs of these plugins and upgrade to a version that supports Built-in Kotlin.
+If no such version exists, report the issue to the plugin. If necessary, here is a guide on filing
+an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
+
+If you are a plugin author, please migrate your plugin to Built-in Kotlin using this guide: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 5392 bytes (99.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Caught exception: Already watching path: /home/runner/work/N07-HUB-RELEASES/N07-HUB-RELEASES/app/android
+Running Gradle task 'assembleRelease'...                          285.6s
+✓ Built build/app/outputs/flutter-apk/app-release.apk (68.5MB)
++ cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16.apk
++ cd ..
++ sha256sum build-output/N07_HUBDNI_ANDROID_RC16.apk
++ tee build-output/N07_HUBDNI_ANDROID_RC16.sha256
+9ea40b4f9fe783fb8f5c94cd29a6fa2ba68924792422acb5e24ea7ece37d260b  build-output/N07_HUBDNI_ANDROID_RC16.apk
