@@ -6,6 +6,12 @@ on:
       - tmp/android-rc16-final-20260823
     paths:
       - build/trigger-final.txt
+  pull_request:
+    branches:
+      - main
+    paths:
+      - build/**
+      - .github/workflows/build-android-rc16.yml
 
 permissions:
   contents: write
@@ -58,13 +64,10 @@ jobs:
             python3 - <<'PY'
           from pathlib import Path
 
-          # Android min SDK.
           p = Path('app/android/app/build.gradle.kts')
-          s = p.read_text()
-          s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+          s = p.read_text().replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
           p.write_text(s)
 
-          # Keep prior RC16 Dart signature compatibility patch.
           d = Path('app/lib/main.dart')
           s = d.read_text()
           old = "    String action, [\n    Map<String, dynamic> extra = const {},\n  ], {\n"
@@ -75,11 +78,9 @@ jobs:
           s = s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
           s = s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
 
-          # Add a global background shell without changing existing navigation or feature logic.
           shell = r'''
           class _N07BackgroundShell extends StatelessWidget {
             const _N07BackgroundShell({required this.child});
-
             final Widget child;
 
             @override
@@ -130,7 +131,6 @@ jobs:
                   raise SystemExit('MaterialApp not found for background builder insertion')
           d.write_text(s)
 
-          # Register the image as a Flutter asset.
           pub = Path('app/pubspec.yaml')
           y = pub.read_text()
           asset = '    - assets/background/n07_background_vertical.jpg'
@@ -165,7 +165,7 @@ jobs:
           exit 0
 
       - name: Commit build result
-        if: always()
+        if: always() && github.event_name == 'push'
         shell: bash
         run: |
           set -euxo pipefail
