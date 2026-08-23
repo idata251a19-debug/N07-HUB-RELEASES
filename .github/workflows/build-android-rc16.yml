@@ -77,57 +77,30 @@ jobs:
           s = s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
           s = s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
 
-          shell = r'''
-          class _N07BackgroundShell extends StatelessWidget {
-            const _N07BackgroundShell({required this.child});
-            final Widget child;
+          s = s.replace(
+              'scaffoldBackgroundColor: const Color(0xfff5f6f8),',
+              'scaffoldBackgroundColor: Colors.transparent,',
+              1,
+          )
 
-            @override
-            Widget build(BuildContext context) {
-              final baseTheme = Theme.of(context);
-              return Theme(
-                data: baseTheme.copyWith(
-                  scaffoldBackgroundColor: Colors.transparent,
-                  canvasColor: Colors.transparent,
-                ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      'assets/background/n07_background_vertical.jpg',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
-                    ),
-                    const ColoredBox(color: Color(0x12000000)),
-                    child,
-                  ],
-                ),
-              );
-            }
-          }
-
-          '''
-          if 'class _N07BackgroundShell extends StatelessWidget' not in s:
-              idx = s.find('void main(')
-              if idx < 0:
-                  raise SystemExit('void main() not found')
-              s = s[:idx] + shell + s[idx:]
-
-          if '_N07BackgroundShell(child:' not in s:
-              if 'MaterialApp(' in s:
-                  s = s.replace(
-                      'MaterialApp(',
-                      "MaterialApp(\n      builder: (context, child) => _N07BackgroundShell(child: child ?? const SizedBox.shrink()),",
-                      1,
-                  )
-              elif 'MaterialApp.router(' in s:
-                  s = s.replace(
-                      'MaterialApp.router(',
-                      "MaterialApp.router(\n      builder: (context, child) => _N07BackgroundShell(child: child ?? const SizedBox.shrink()),",
-                      1,
-                  )
-              else:
-                  raise SystemExit('MaterialApp not found')
+          if "'assets/background/n07_background_vertical.jpg'" not in s:
+              marker = "      home: _loading\n"
+              builder = """      builder: (context, child) => Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/background/n07_background_vertical.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                  const ColoredBox(color: Color(0x16000000)),
+                  if (child != null) child,
+                ],
+              ),
+"""
+              if marker not in s:
+                  raise SystemExit('MaterialApp home marker not found')
+              s = s.replace(marker, builder + marker, 1)
           d.write_text(s)
 
           pub = Path('app/pubspec.yaml')
@@ -143,7 +116,7 @@ jobs:
                       1,
                   )
               else:
-                  raise SystemExit('pubspec asset insertion point not found')
+                  raise SystemExit('flutter asset insertion point not found')
           pub.write_text(y)
           PY
 
