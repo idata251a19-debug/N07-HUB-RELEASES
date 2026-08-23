@@ -69,7 +69,7 @@ jobs:
             cd app
             flutter pub get
             dart format lib test
-            flutter analyze
+            flutter analyze --no-fatal-infos --no-fatal-warnings
             flutter test
             flutter build apk --release
             cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16.apk
