@@ -7,6 +7,12 @@ on:
       - tmp/android-rc16-final-20260823
     paths:
       - build/trigger-final.txt
+  pull_request:
+    branches:
+      - main
+    paths:
+      - build/**
+      - .github/workflows/build-android-rc16.yml
 
 permissions:
   contents: write
@@ -82,7 +88,7 @@ jobs:
           tail -250 build-output/build.log || true
           exit 0
       - name: Commit build result
-        if: always()
+        if: always() && github.event_name == 'push'
         shell: bash
         run: |
           set -euxo pipefail
