@@ -38,7 +38,6 @@ jobs:
           (
             set -euxo pipefail
             flutter --version
-
             cat build/android_rc16_exact_v2/part{00..10}.txt \
                 build/android_rc16_exact_v3/part11_00.txt \
                 build/android_rc16_exact_v3/part11_01.txt \
@@ -49,7 +48,6 @@ jobs:
             echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip' | sha256sum -c -
             unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
-
             python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
             python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
             (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
@@ -84,62 +82,33 @@ jobs:
           s = s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
           s = s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
           s = s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
-
-          shell = r'''
-          class _N07BackgroundShell extends StatelessWidget {
-            const _N07BackgroundShell({required this.child});
-            final Widget child;
-
-            @override
-            Widget build(BuildContext context) {
-              final baseTheme = Theme.of(context);
-              return Theme(
-                data: baseTheme.copyWith(
-                  scaffoldBackgroundColor: Colors.transparent,
-                  canvasColor: Colors.transparent,
-                ),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      'assets/background/n07_background_vertical.jpg',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.center,
-                    ),
-                    const ColoredBox(color: Color(0x12000000)),
-                    child,
-                  ],
-                ),
-              );
-            }
-          }
-
-          '''
-          if 'class _N07BackgroundShell extends StatelessWidget' not in s:
-              idx = s.find('void main(')
-              if idx < 0:
-                  raise SystemExit('void main() not found')
-              s = s[:idx] + shell + s[idx:]
-
-          if '_N07BackgroundShell(child:' not in s:
-              if 'MaterialApp(' in s:
-                  s = s.replace(
-                      'MaterialApp(',
-                      "MaterialApp(\n      builder: (context, child) => _N07BackgroundShell(child: child ?? const SizedBox.shrink()),",
-                      1,
-                  )
-              elif 'MaterialApp.router(' in s:
-                  s = s.replace(
-                      'MaterialApp.router(',
-                      "MaterialApp.router(\n      builder: (context, child) => _N07BackgroundShell(child: child ?? const SizedBox.shrink()),",
-                      1,
-                  )
-              else:
-                  raise SystemExit('MaterialApp not found')
+          s = s.replace(
+              'scaffoldBackgroundColor: const Color(0xfff5f6f8),',
+              'scaffoldBackgroundColor: Colors.transparent,',
+              1,
+          )
+          if "'assets/background/n07_background_vertical.jpg'" not in s:
+              marker = "      home: _loading\n"
+              builder = """      builder: (context, child) => Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/background/n07_background_vertical.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                  const ColoredBox(color: Color(0x16000000)),
+                  if (child != null) child,
+                ],
+              ),
+"""
+              if marker not in s:
+                  raise SystemExit('MaterialApp home marker not found')
+              s = s.replace(marker, builder + marker, 1)
           d.write_text(s)
 
           pub = Path('app/pubspec.yaml')
-          y = pub.read_text()
+          y = pub.read_text().replace('version: 16.0.0+43', 'version: 16.0.1+44')
           asset = '    - assets/background/n07_background_vertical.jpg'
           if asset not in y:
               if '  assets:\n' in y:
@@ -151,7 +120,7 @@ jobs:
                       1,
                   )
               else:
-                  raise SystemExit('pubspec asset insertion point not found')
+                  raise SystemExit('flutter asset insertion point not found')
           pub.write_text(y)
           PY
 
@@ -163,7 +132,6 @@ jobs:
             flutter build apk --release
             cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16_BG.apk
             cd ..
-
             sha256sum build-output/N07_HUBDNI_ANDROID_RC16_BG.apk | tee build-output/N07_HUBDNI_ANDROID_RC16_BG.sha256
             unzip -l build-output/N07_HUBDNI_ANDROID_RC16_BG.apk | grep 'assets/flutter_assets/assets/background/n07_background_vertical.jpg'
           ) > build-output/build.log 2>&1
