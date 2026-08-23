@@ -31,14 +31,14 @@ jobs:
           (
             set -euxo pipefail
             flutter --version
+            cat build/android_rc16_chunks/part*.txt > /tmp/android_rc16_overlay.b64
+            base64 -d /tmp/android_rc16_overlay.b64 > /tmp/android_rc16_overlay.zip
+            echo '92f92e96842012856074d91918bb21e57226c7e38d6c00b11630b1f77a3b07c6  /tmp/android_rc16_overlay.zip' | sha256sum -c -
+            unzip -t /tmp/android_rc16_overlay.zip
             rm -rf app
             flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_mobile
-            cp build/android_rc16_src/pubspec.yaml app/pubspec.yaml
-            cp build/android_rc16_src/analysis_options.yaml app/analysis_options.yaml
-            cp build/android_rc16_src/main.dart app/lib/main.dart
-            mkdir -p app/test
-            cp build/android_rc16_src/basic_test.dart app/test/basic_test.dart
-            cp build/android_rc16_src/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+            unzip -o /tmp/android_rc16_overlay.zip -d app
+            cp app/android_override/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
             python3 - <<'PY'
           from pathlib import Path
           p = Path('app/android/app/build.gradle.kts')
