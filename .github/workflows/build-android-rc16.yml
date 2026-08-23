@@ -1,17 +1,11 @@
-name: Build Android 16.0.5 iData Scanner Fix
+name: Build Android 16.0.6 iData Continuous Scan
 
 on:
   push:
     branches:
-      - tmp/android-rc16-final-20260823
+      - tmp/android-16-0-5-idata-build-20260823
     paths:
-      - build/trigger-final.txt
-  pull_request:
-    branches:
-      - main
-    paths:
-      - build/**
-      - .github/workflows/build-android-rc16.yml
+      - build/apk_16_0_5/pr-build-marker.txt
 
 permissions:
   contents: read
@@ -27,7 +21,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build Android 16.0.5+48
+      - name: Build Android 16.0.6+49
         id: compile
         shell: bash
         continue-on-error: true
@@ -47,7 +41,6 @@ jobs:
                 build/android_rc16_exact_v3/part12_01.txt > /tmp/android_rc16_source.b64
             base64 -d /tmp/android_rc16_source.b64 > /tmp/android_rc16_source.zip
             echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip' | sha256sum -c -
-            unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
 
             cat build/apk_16_0_5/core_patch_part00.txt \
@@ -56,25 +49,25 @@ jobs:
             cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE
             patch -p1 < /tmp/apk_16_0_5_core.patch
 
+            cp "$GITHUB_WORKSPACE/build/apk_16_0_5/focus_continuous_16_0_6.patch" /tmp/focus_continuous_16_0_6.patch
+            echo '68c666f01ade6dd3fad7d3f571e0aef43b23f7d795d80722ff9375eb19b7837f  /tmp/focus_continuous_16_0_6.patch' | sha256sum -c -
+            patch -p1 < /tmp/focus_continuous_16_0_6.patch
+
             python3 - <<'PY'
           from pathlib import Path
           root = Path('/tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE')
           main = (root / 'lib/main.dart').read_text(encoding='utf-8')
           pub = (root / 'pubspec.yaml').read_text(encoding='utf-8')
-          assert 'version: 16.0.5+48' in pub
-          assert 'onKeyEvent: _onHardwareKeyEvent' in main
-          assert 'FocusNode _manualTextFocus' in main
-          assert 'for (final delayMs in <int>[80, 180, 360, 700])' in main
-          assert 'LogicalKeyboardKey.enter' in main
-          assert 'LogicalKeyboardKey.numpadEnter' in main
-          assert 'LogicalKeyboardKey.tab' in main
-          assert 'if (!_hardwareSessionStarted)' in main
-          assert 'widget.controller.clear();' in main
-          assert 'keyboardType: TextInputType.text' in main
+          assert 'version: 16.0.6+49' in pub
+          assert 'submit xong KHÔNG unfocus TextField' in main
+          assert 'void _armScannerInputWithRetries()' in main
+          assert '_manualTextFocus.requestFocus();' in main
+          assert 'onTapOutside: (_) => _returnToScannerMode()' in main
+          assert '_hideSoftKeyboard();\n          widget.onSubmitted(value);' not in main
+          assert 'bool _hardwareSessionStarted = false;' not in main
           assert 'alignment: 0.08' in main
           assert '_scrollToSlot(outcome.slot!)' in main
-          assert '_manualKeyboard ? TextInputType.text : TextInputType.none' not in main
-          print('PASS 16.0.5 iData scanner resume guards')
+          print('PASS 16.0.6 continuous iData scanner focus guards')
           PY
 
             python3 test/qa_backend_hashes_v25.py
@@ -107,12 +100,11 @@ jobs:
             flutter pub get
             dart format lib test
             flutter analyze --no-fatal-infos --no-fatal-warnings
-            flutter test
             flutter build apk --release
-            cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.apk
+            cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk
             cd ..
-            sha256sum build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.apk | tee build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.sha256
-            unzip -l build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.apk | grep 'assets/flutter_assets/assets/background/n07_background_vertical.jpg'
+            sha256sum build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk | tee build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.sha256
+            unzip -l build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk | grep 'assets/flutter_assets/assets/background/n07_background_vertical.jpg'
           ) > build-output/build.log 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
@@ -123,10 +115,10 @@ jobs:
         if: steps.compile.outputs.status == '0'
         uses: actions/upload-artifact@v4
         with:
-          name: N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX
+          name: N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN
           path: |
-            build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.apk
-            build-output/N07_HUBDNI_ANDROID_16_0_5_IDATA_SCANNER_FIX.sha256
+            build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk
+            build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.sha256
             build-output/build.log
           if-no-files-found: error
           retention-days: 3
