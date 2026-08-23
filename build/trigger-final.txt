@@ -1,1 +1,1 @@
-N07 HUBDNI Android RC16 approved vertical background build 2026-08-23T13:40+07:00
+N07 HUBDNI Android 16.0.5+48 iData scanner resume fix build
