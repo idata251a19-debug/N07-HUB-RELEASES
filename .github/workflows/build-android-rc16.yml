@@ -56,24 +56,11 @@ jobs:
           p.write_text(s)
           d=Path('app/lib/main.dart')
           s=d.read_text()
-          old="""  Future<Map<String, dynamic>> _call(
-            String action, [
-            Map<String, dynamic> extra = const {},
-          ], {
-            bool auth = false,
-          }) async {"""
-          new="""  Future<Map<String, dynamic>> _call(
-            String action,
-            Map<String, dynamic> extra, {
-            bool auth = false,
-          }) async {"""
+          old="    String action, [\n    Map<String, dynamic> extra = const {},\n  ], {\n"
+          new="    String action,\n    Map<String, dynamic> extra, {\n"
           if old not in s:
               raise SystemExit('expected _call signature not found')
-          s=s.replace(old,new)
-          s=s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
-          s=s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
-          s=s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
-          d.write_text(s)
+          d.write_text(s.replace(old,new,1))
           PY
             cd app
             flutter pub get
