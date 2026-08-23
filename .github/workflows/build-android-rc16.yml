@@ -1,0 +1,74 @@
+name: Build Android RC16
+
+on:
+  push:
+    branches:
+      - tmp/android-rc16-build-20260823
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.44.6'
+          cache: true
+
+      - name: Create Android project and overlay N07 source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf app
+          flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_mobile
+          unzip -o build/android_rc16_overlay.zip -d app
+          cp app/android_override/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/android/app/build.gradle.kts')
+          s = p.read_text()
+          s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+          p.write_text(s)
+          PY
+
+      - name: QA and build release APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd app
+          flutter pub get
+          dart format lib test
+          flutter analyze
+          flutter test
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk ../N07_HUBDNI_ANDROID_RC16.apk
+          sha256sum ../N07_HUBDNI_ANDROID_RC16.apk | tee ../N07_HUBDNI_ANDROID_RC16.sha256
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: N07_HUBDNI_ANDROID_RC16
+          path: |
+            N07_HUBDNI_ANDROID_RC16.apk
+            N07_HUBDNI_ANDROID_RC16.sha256
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Commit APK to temporary branch
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p build-output
+          cp N07_HUBDNI_ANDROID_RC16.apk build-output/
+          cp N07_HUBDNI_ANDROID_RC16.sha256 build-output/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build-output
+          git commit -m 'build: N07 Android RC16 APK [skip ci]'
+          git push origin HEAD:tmp/android-rc16-build-20260823
