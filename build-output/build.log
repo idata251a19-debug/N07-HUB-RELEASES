@@ -1,0 +1,33 @@
++ flutter --version
+Flutter 3.47.1 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 6655482ec0 (3 days ago) • 2026-08-19 10:07:23 -0700
+Engine • hash 11d79658c444477b06513d32b52c8c4ccb7276b0 (revision 5d53178869) (4 days ago) • 2026-08-18 23:36:01.000Z
+Tools • Dart 3.13.1 • DevTools 2.60.0
++ rm -rf app
++ flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_mobile
+Creating project app...
+Resolving dependencies in `app`...
+Downloading packages...
+Got dependencies in `app`.
+Wrote 35 files.
+
+All done!
+You can find general documentation for Flutter at: https://docs.flutter.dev/
+Detailed API documentation is available at: https://api.flutter.dev/
+If you prefer video documentation, consider: https://www.youtube.com/c/flutterdev
+
+In order to run your application, type:
+
+  $ cd app
+  $ flutter run
+
+Your application code is in app/lib/main.dart.
+
++ unzip -o build/android_rc16_overlay.zip -d app
+Archive:  build/android_rc16_overlay.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+unzip:  cannot find zipfile directory in one of build/android_rc16_overlay.zip or
+        build/android_rc16_overlay.zip.zip, and cannot find build/android_rc16_overlay.zip.ZIP, period.
