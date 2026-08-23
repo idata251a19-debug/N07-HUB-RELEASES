@@ -32,8 +32,6 @@ jobs:
           (
             set -euxo pipefail
             flutter --version
-
-            # Reconstruct the exact RC16 source used by the approved build.
             cat build/android_rc16_exact_v2/part{00..10}.txt \
                 build/android_rc16_exact_v3/part11_00.txt \
                 build/android_rc16_exact_v3/part11_01.txt \
@@ -45,14 +43,11 @@ jobs:
             unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
 
-            # Apply cumulative source changes through 16.0.5+48.
             cat build/apk_16_0_5/core_patch_part00.txt \
                 build/apk_16_0_5/core_patch_part01.txt > /tmp/apk_16_0_5_core.patch
-            echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/apk_16_0_5_core.patch' | sha256sum -c -
             cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE
             patch -p1 < /tmp/apk_16_0_5_core.patch
 
-            # Guard the exact scanner/resume fix before compiling.
             python3 - <<'PY'
           from pathlib import Path
           root = Path('/tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE')
@@ -85,7 +80,6 @@ jobs:
             cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
             rm -f app/test/widget_test.dart.bak
 
-            # Keep the approved vertical background already used by RC16.
             mkdir -p app/assets/background
             cat build/bg_ui1_parts/part00.txt \
                 build/bg_ui1_parts/part01.txt \
