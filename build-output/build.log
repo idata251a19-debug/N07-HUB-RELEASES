@@ -1,0 +1,10 @@
++ flutter --version
+Flutter 3.47.1 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 6655482ec0 (3 days ago) • 2026-08-19 10:07:23 -0700
+Engine • hash 11d79658c444477b06513d32b52c8c4ccb7276b0 (revision 5d53178869) (4 days ago) • 2026-08-18 23:36:01.000Z
+Tools • Dart 3.13.1 • DevTools 2.60.0
++ find build/android_rc16_final_chunks -maxdepth 1 -type f -name 'part*.txt' -print0
++ sort -zV
++ xargs -0 cat
++ base64 -d /tmp/android_rc16_source.b64
+base64: invalid input
