@@ -1,0 +1,55 @@
++ flutter --version
+Flutter 3.47.1 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 6655482ec0 (4 days ago) • 2026-08-19 10:07:23 -0700
+Engine • hash 11d79658c444477b06513d32b52c8c4ccb7276b0 (revision 5d53178869) (4 days ago) • 2026-08-18 23:36:01.000Z
+Tools • Dart 3.13.1 • DevTools 2.60.0
++ OLD=https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823
+++ seq -w 0 10
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part00.txt -o /tmp/n07/download/v2_00.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part01.txt -o /tmp/n07/download/v2_01.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part02.txt -o /tmp/n07/download/v2_02.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part03.txt -o /tmp/n07/download/v2_03.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part04.txt -o /tmp/n07/download/v2_04.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part05.txt -o /tmp/n07/download/v2_05.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part06.txt -o /tmp/n07/download/v2_06.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part07.txt -o /tmp/n07/download/v2_07.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part08.txt -o /tmp/n07/download/v2_08.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part09.txt -o /tmp/n07/download/v2_09.txt
++ for i in $(seq -w 0 10)
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v2/part10.txt -o /tmp/n07/download/v2_10.txt
++ for f in part11_00 part11_01 part11_02 part12_00 part12_01
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v3/part11_00.txt -o /tmp/n07/download/part11_00.txt
++ for f in part11_00 part11_01 part11_02 part12_00 part12_01
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v3/part11_01.txt -o /tmp/n07/download/part11_01.txt
++ for f in part11_00 part11_01 part11_02 part12_00 part12_01
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v3/part11_02.txt -o /tmp/n07/download/part11_02.txt
++ for f in part11_00 part11_01 part11_02 part12_00 part12_01
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v3/part12_00.txt -o /tmp/n07/download/part12_00.txt
++ for f in part11_00 part11_01 part11_02 part12_00 part12_01
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/android_rc16_exact_v3/part12_01.txt -o /tmp/n07/download/part12_01.txt
++ cat /tmp/n07/download/v2_00.txt /tmp/n07/download/v2_01.txt /tmp/n07/download/v2_02.txt /tmp/n07/download/v2_03.txt /tmp/n07/download/v2_04.txt /tmp/n07/download/v2_05.txt /tmp/n07/download/v2_06.txt /tmp/n07/download/v2_07.txt /tmp/n07/download/v2_08.txt /tmp/n07/download/v2_09.txt /tmp/n07/download/v2_10.txt /tmp/n07/download/part11_00.txt /tmp/n07/download/part11_01.txt /tmp/n07/download/part11_02.txt /tmp/n07/download/part12_00.txt /tmp/n07/download/part12_01.txt
++ base64 -d /tmp/n07/base.b64
++ echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/n07/base.zip'
++ sha256sum -c -
+/tmp/n07/base.zip: OK
++ unzip -q /tmp/n07/base.zip -d /tmp/n07/base
++ ROOT=/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/core_patch_part00.txt -o /tmp/n07/core0.patch
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/core_patch_part01.txt -o /tmp/n07/core1.patch
++ cat /tmp/n07/core0.patch /tmp/n07/core1.patch
++ cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p1
+patching file lib/main.dart
+Hunk #22 FAILED at 7840.
+1 out of 31 hunks FAILED -- saving rejects to file lib/main.dart.rej
+patching file pubspec.yaml
