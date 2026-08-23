@@ -1,0 +1,78 @@
+name: Build Android RC16
+
+on:
+  push:
+    branches:
+      - tmp/android-rc16-build-20260823
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Build and capture diagnostics
+        id: compile
+        shell: bash
+        continue-on-error: true
+        run: |
+          set +e
+          mkdir -p build-output
+          (
+            set -euxo pipefail
+            flutter --version
+            rm -rf app
+            flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_mobile
+            unzip -o build/android_rc16_overlay.zip -d app
+            cp app/android_override/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+            python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/android/app/build.gradle.kts')
+          s = p.read_text()
+          s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+          p.write_text(s)
+          PY
+            cd app
+            flutter pub get
+            dart format lib test
+            flutter analyze
+            flutter test
+            flutter build apk --release
+            cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16.apk
+            cd ..
+            sha256sum build-output/N07_HUBDNI_ANDROID_RC16.apk | tee build-output/N07_HUBDNI_ANDROID_RC16.sha256
+          ) > build-output/build.log 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          tail -200 build-output/build.log || true
+          exit 0
+      - name: Commit build result to temporary branch
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build-output
+          git commit -m 'build: N07 Android RC16 result [skip ci]' || true
+          git push origin HEAD:tmp/android-rc16-build-20260823
+      - name: Upload APK artifact
+        if: steps.compile.outputs.status == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: N07_HUBDNI_ANDROID_RC16
+          path: |
+            build-output/N07_HUBDNI_ANDROID_RC16.apk
+            build-output/N07_HUBDNI_ANDROID_RC16.sha256
+          if-no-files-found: error
+          retention-days: 3
+      - name: Fail build if compile failed
+        if: steps.compile.outputs.status != '0'
+        run: exit 1
