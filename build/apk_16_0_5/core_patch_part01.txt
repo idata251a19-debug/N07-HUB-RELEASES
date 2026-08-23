@@ -1,0 +1,459 @@
+: [
+-                Chip(label: Text('KHỚP $matched')),
+-                Chip(label: Text('THIẾU $missing')),
+-                Chip(label: Text('SAI VỊ TRÍ $wrong')),
+-                Chip(label: Text('NGOÀI HỆ THỐNG $unknown')),
+-              ],
+-            ),
+-          ),
+-          const SizedBox(height: 6),
++          const SizedBox(height: 4),
+           Expanded(
+             child: _items.isEmpty
+                 ? const Center(
+@@ -7720,38 +7871,71 @@
+                               : r.found
+                                   ? 'NGOÀI HỆ THỐNG • ĐÃ XUẤT'
+                                   : 'NGOÀI HỆ THỐNG • KHÔNG TÌM THẤY';
+-                      return ListTile(
+-                        dense: true,
+-                        visualDensity: VisualDensity.compact,
+-                        leading: SizedBox(
+-                          width: 30,
+-                          child: Text(
+-                            '${_items.length - index}',
+-                            textAlign: TextAlign.center,
+-                            style: const TextStyle(
+-                              fontWeight: FontWeight.w900,
+-                              fontSize: 11,
+-                            ),
+-                          ),
+-                        ),
+-                        title: Text(
+-                          item.code,
+-                          maxLines: 1,
+-                          overflow: TextOverflow.ellipsis,
+-                          style: const TextStyle(
+-                            fontWeight: FontWeight.w900,
+-                            fontSize: 12,
++                      final tone = itemMatched
++                          ? Colors.green
++                          : itemWrong
++                              ? Colors.orange
++                              : Colors.red;
++                      return Container(
++                        margin: const EdgeInsets.symmetric(vertical: 2),
++                        padding: const EdgeInsets.symmetric(
++                          horizontal: 10,
++                          vertical: 8,
++                        ),
++                        decoration: BoxDecoration(
++                          color: tone.withValues(alpha: 0.08),
++                          borderRadius: BorderRadius.circular(9),
++                          border: Border.all(
++                            color: tone.withValues(alpha: 0.28),
+                           ),
+                         ),
+-                        subtitle: Text(
+-                          subtitle,
+-                          style: TextStyle(
+-                            color: itemMatched
+-                                ? Colors.green.shade800
+-                                : Colors.red.shade700,
+-                            fontSize: 10.5,
+-                            fontWeight: FontWeight.w700,
+-                          ),
++                        child: Row(
++                          crossAxisAlignment: CrossAxisAlignment.start,
++                          children: [
++                            SizedBox(
++                              width: 28,
++                              child: Text(
++                                '${_items.length - index}',
++                                textAlign: TextAlign.center,
++                                style: const TextStyle(
++                                  fontWeight: FontWeight.w900,
++                                  fontSize: 12,
++                                ),
++                              ),
++                            ),
++                            const SizedBox(width: 6),
++                            Expanded(
++                              child: Column(
++                                crossAxisAlignment: CrossAxisAlignment.start,
++                                children: [
++                                  Text(
++                                    item.code,
++                                    maxLines: 1,
++                                    overflow: TextOverflow.ellipsis,
++                                    style: const TextStyle(
++                                      fontWeight: FontWeight.w900,
++                                      fontSize: 13.5,
++                                    ),
++                                  ),
++                                  const SizedBox(height: 2),
++                                  Text(
++                                    subtitle,
++                                    maxLines: 2,
++                                    overflow: TextOverflow.ellipsis,
++                                    style: TextStyle(
++                                      color: itemMatched
++                                          ? Colors.green.shade800
++                                          : itemWrong
++                                              ? Colors.orange.shade900
++                                              : Colors.red.shade700,
++                                      fontSize: 11,
++                                      fontWeight: FontWeight.w800,
++                                    ),
++                                  ),
++                                ],
++                              ),
++                            ),
++                          ],
+                         ),
+                       );
+                     },
+@@ -7759,19 +7943,6 @@
+           ),
+         ],
+       ),
+-      floatingActionButton: _items.isEmpty
+-          ? null
+-          : FloatingActionButton.extended(
+-              onPressed: _saving || _saved ? null : _saveAudit,
+-              icon: _saving
+-                  ? const SizedBox(
+-                      width: 16,
+-                      height: 16,
+-                      child: CircularProgressIndicator(strokeWidth: 2),
+-                    )
+-                  : const Icon(Icons.save_outlined),
+-              label: Text(_saved ? 'ĐÃ LƯU' : 'LƯU KIỂM KÊ'),
+-            ),
+     );
+   }
+ }
+@@ -7790,6 +7961,7 @@
+ 
+ class _InventoryPageState extends State<InventoryPage> {
+   final _search = TextEditingController();
++  final _searchFocus = FocusNode();
+   List<Map<String, dynamic>> _items = const [];
+   Map<String, String> _labels = const {};
+   bool _loading = true;
+@@ -7866,11 +8038,34 @@
+   void initState() {
+     super.initState();
+     _refresh();
++    WidgetsBinding.instance.addPostFrameCallback((_) {
++      if (mounted) _focusInventorySearch();
++    });
++  }
++
++  void _focusInventorySearch() {
++    if (!mounted) return;
++    _focusScannerInput(_searchFocus);
++    _search.selection = TextSelection(
++      baseOffset: 0,
++      extentOffset: _search.text.length,
++    );
++  }
++
++  void _submitInventorySearch(String value) {
++    final code = value.trim();
++    if (code.isNotEmpty) {
++      setState(() => _query = code);
++    }
++    WidgetsBinding.instance.addPostFrameCallback((_) {
++      if (mounted) _focusInventorySearch();
++    });
+   }
+ 
+   @override
+   void dispose() {
+     _search.dispose();
++    _searchFocus.dispose();
+     super.dispose();
+   }
+ 
+@@ -7912,6 +8107,9 @@
+     if (code == null || !mounted) return;
+     _search.text = code;
+     setState(() => _query = code);
++    WidgetsBinding.instance.addPostFrameCallback((_) {
++      if (mounted) _focusInventorySearch();
++    });
+   }
+ 
+   Future<void> _detail(Map<String, dynamic> item) async {
+@@ -7986,7 +8184,11 @@
+             padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+             child: TextField(
+               controller: _search,
++              focusNode: _searchFocus,
++              autofocus: true,
++              textInputAction: TextInputAction.search,
+               onChanged: (value) => setState(() => _query = value),
++              onSubmitted: _submitInventorySearch,
+               decoration: InputDecoration(
+                 labelText: 'Tìm mã PIN / vị trí',
+                 prefixIcon: const Icon(Icons.search),
+@@ -9276,19 +9478,54 @@
+ 
+ class _ScannerTextFieldState extends State<_ScannerTextField> with WidgetsBindingObserver {
+   bool _manualKeyboard = false;
++  bool _hardwareSessionStarted = false;
++  final FocusNode _manualTextFocus = FocusNode(
++    debugLabel: 'n07-scanner-manual-text',
++  );
+ 
+   @override
+   void initState() {
+     super.initState();
+     WidgetsBinding.instance.addObserver(this);
++    WidgetsBinding.instance.addPostFrameCallback((_) {
++      if (mounted && widget.enabled) _armHardwareScanner();
++    });
+   }
+ 
+   @override
+   void dispose() {
+     WidgetsBinding.instance.removeObserver(this);
++    _manualTextFocus.dispose();
+     super.dispose();
+   }
+ 
++  bool _routeIsCurrent() {
++    if (!mounted) return false;
++    final route = ModalRoute.of(context);
++    return route == null || route.isCurrent;
++  }
++
++  void _armHardwareScanner() {
++    if (!mounted || !widget.enabled || !_routeIsCurrent()) return;
++    if (_manualKeyboard) return;
++
++    _manualTextFocus.unfocus();
++    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
++    if (widget.focusNode.canRequestFocus) {
++      widget.focusNode.requestFocus();
++    }
++  }
++
++  void _armHardwareScannerWithRetries() {
++    _armHardwareScanner();
++    for (final delayMs in <int>[80, 180, 360, 700]) {
++      Future<void>.delayed(Duration(milliseconds: delayMs), () {
++        if (!mounted || !widget.enabled || _manualKeyboard) return;
++        _armHardwareScanner();
++      });
++    }
++  }
++
+   @override
+   void didChangeAppLifecycleState(AppLifecycleState state) {
+     if (state == AppLifecycleState.paused ||
+@@ -9296,46 +9533,106 @@
+         state == AppLifecycleState.hidden ||
+         state == AppLifecycleState.detached) {
+       _manualKeyboard = false;
++      _hardwareSessionStarted = false;
++      _manualTextFocus.unfocus();
++      widget.focusNode.unfocus();
+       SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+       return;
+     }
+ 
+     if (state == AppLifecycleState.resumed && widget.enabled) {
+-      final route = ModalRoute.of(context);
+-      if (route != null && !route.isCurrent) return;
+       _manualKeyboard = false;
+-      widget.focusNode.unfocus();
+-      SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+-      Future<void>.delayed(const Duration(milliseconds: 140), () {
+-        if (!mounted || !widget.enabled) return;
+-        _focusScannerInput(widget.focusNode);
+-      });
++      _hardwareSessionStarted = false;
++      // iData có thể trả HID về muộn hơn Flutter resume. Arm nhiều nhịp để
++      // không cần thoát/mở app khi vừa bật màn hình hoặc foreground lại.
++      _armHardwareScannerWithRetries();
+     }
+   }
+ 
+-  void _hideSoftKeyboard() {
++  KeyEventResult _onHardwareKeyEvent(FocusNode node, KeyEvent event) {
++    if (!widget.enabled || _manualKeyboard || !_routeIsCurrent()) {
++      return KeyEventResult.ignored;
++    }
++    if (event is! KeyDownEvent) return KeyEventResult.handled;
++
++    final logicalKey = event.logicalKey;
++    if (logicalKey == LogicalKeyboardKey.enter ||
++        logicalKey == LogicalKeyboardKey.numpadEnter ||
++        logicalKey == LogicalKeyboardKey.tab) {
++      final value = widget.controller.text;
++      _hardwareSessionStarted = false;
++      widget.onSubmitted(value);
++      _armHardwareScannerWithRetries();
++      return KeyEventResult.handled;
++    }
++
++    if (logicalKey == LogicalKeyboardKey.backspace) {
++      final text = widget.controller.text;
++      if (text.isNotEmpty) {
++        final shortened = text.substring(0, text.length - 1);
++        widget.controller.value = TextEditingValue(
++          text: shortened,
++          selection: TextSelection.collapsed(offset: shortened.length),
++        );
++      }
++      return KeyEventResult.handled;
++    }
++
++    final character = event.character;
++    if (character == null || character.isEmpty) {
++      return KeyEventResult.handled;
++    }
++
++    // Chỉ nhận ký tự in được. iData HID bắn chuỗi rất nhanh rồi Enter/Tab.
++    if (character.runes.any((rune) => rune < 0x20 || rune == 0x7f)) {
++      return KeyEventResult.handled;
++    }
++
++    if (!_hardwareSessionStarted) {
++      // Bill/mã mới luôn ghi đè dữ liệu scan trước, tránh nối chuỗi khi màn
++      // hình vừa resume hoặc controller còn giữ mã cũ.
++      widget.controller.clear();
++      _hardwareSessionStarted = true;
++    }
++
++    final next = '${widget.controller.text}$character';
++    widget.controller.value = TextEditingValue(
++      text: next,
++      selection: TextSelection.collapsed(offset: next.length),
++    );
++    return KeyEventResult.handled;
++  }
++
++  void _hideSoftKeyboard({bool returnToScanner = true}) {
+     if (_manualKeyboard && mounted) {
+       setState(() => _manualKeyboard = false);
+     }
++    _hardwareSessionStarted = false;
++    _manualTextFocus.unfocus();
+     SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
++    if (returnToScanner) {
++      _armHardwareScannerWithRetries();
++    }
+   }
+ 
+   void _showSoftKeyboardFromTap() {
+     if (!widget.enabled) return;
++    _hardwareSessionStarted = false;
++    widget.focusNode.unfocus();
+     if (!_manualKeyboard) {
+       setState(() => _manualKeyboard = true);
+     }
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+       if (!mounted || !widget.enabled) return;
+-      if (!widget.focusNode.hasFocus) {
+-        widget.focusNode.requestFocus();
++      if (!_manualTextFocus.hasFocus) {
++        _manualTextFocus.requestFocus();
+       }
+       SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+       Future<void>.delayed(const Duration(milliseconds: 240), () {
+         if (!mounted ||
+             !_manualKeyboard ||
+             !widget.enabled ||
+-            !widget.focusNode.hasFocus) {
++            !_manualTextFocus.hasFocus) {
+           return;
+         }
+         SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+@@ -9346,34 +9643,45 @@
+   @override
+   void didUpdateWidget(covariant _ScannerTextField oldWidget) {
+     super.didUpdateWidget(oldWidget);
+-    if (!widget.enabled && _manualKeyboard) {
++    if (!widget.enabled) {
+       _manualKeyboard = false;
++      _hardwareSessionStarted = false;
++      _manualTextFocus.unfocus();
++      widget.focusNode.unfocus();
+       SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
++    } else if (!oldWidget.enabled && widget.enabled) {
++      _armHardwareScannerWithRetries();
+     }
+   }
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return TextField(
+-      controller: widget.controller,
++    return Focus(
+       focusNode: widget.focusNode,
+-      enabled: widget.enabled,
+-      autofocus: false,
+-      autocorrect: false,
+-      enableSuggestions: false,
+-      textCapitalization: TextCapitalization.characters,
+-      textInputAction: TextInputAction.done,
+-      // Luôn giữ input connection thật để iData hoạt động ổn định sau khi
+-      // tắt/mở màn hình. Bàn phím mềm chỉ được show khi người dùng tự tap.
+-      keyboardType: TextInputType.text,
+-      onTap: _showSoftKeyboardFromTap,
+-      onTapOutside: (_) => _hideSoftKeyboard(),
+-      onEditingComplete: () {},
+-      onSubmitted: (value) {
+-        _hideSoftKeyboard();
+-        widget.onSubmitted(value);
+-      },
+-      decoration: widget.decoration,
++      onKeyEvent: _onHardwareKeyEvent,
++      canRequestFocus: widget.enabled,
++      descendantsAreFocusable: true,
++      child: TextField(
++        controller: widget.controller,
++        focusNode: _manualTextFocus,
++        enabled: widget.enabled,
++        autofocus: false,
++        autocorrect: false,
++        enableSuggestions: false,
++        textCapitalization: TextCapitalization.characters,
++        textInputAction: TextInputAction.done,
++        // TextField chỉ phục vụ gõ tay. iData/HID được bắt bằng Focus.onKeyEvent
++        // ở phía trên, nên scanner không còn phụ thuộc Android IME/TextInput.
++        keyboardType: TextInputType.text,
++        onTap: _showSoftKeyboardFromTap,
++        onTapOutside: (_) => _hideSoftKeyboard(),
++        onEditingComplete: () {},
++        onSubmitted: (value) {
++          _hideSoftKeyboard();
++          widget.onSubmitted(value);
++        },
++        decoration: widget.decoration,
++      ),
+     );
+   }
+ }
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,13 +1,15 @@
+ name: n07_hub_v1
+ description: N07 HUBDNI Android - field operations synchronized with N07 HUBDNI PC.
+ publish_to: 'none'
+-version: 16.0.0+43
++version: 16.0.5+48
+ 
+ environment:
+   sdk: '>=3.10.0 <4.0.0'
+ 
+ flutter:
+   uses-material-design: true
++  assets:
++    - assets/background/n07_background_vertical.jpg
+ 
+ dependencies:
+   flutter:
