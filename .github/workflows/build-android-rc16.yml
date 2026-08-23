@@ -53,13 +53,13 @@ jobs:
             rm -f app/test/widget_test.dart.bak
 
             mkdir -p app/assets/background
-            cat build/background_rc16/chunks/part00.txt \
-                build/background_rc16/chunks/part01.txt \
-                build/background_rc16/chunks/part02.txt \
-                build/background_rc16/chunks/part03.txt \
-                build/background_rc16/chunks/part04.txt > /tmp/n07_bg.b64
+            cat build/bg_ui1_parts/part00.txt \
+                build/bg_ui1_parts/part01.txt \
+                build/bg_ui1_parts/part02.txt \
+                build/bg_ui1_parts/part03.txt \
+                build/bg_ui1_parts/part04.txt > /tmp/n07_bg.b64
             base64 -d /tmp/n07_bg.b64 > app/assets/background/n07_background_vertical.jpg
-            echo '01454bb1570e5909db9cc30e714390e100c4dccf6aa57f5db848be8ec89def71  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
+            echo '5e850e3747117269be71f2a369549d56d2b2c6e7e4bbb98d720a1ae210f14b5c  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
 
             python3 - <<'PY'
           from pathlib import Path
@@ -76,7 +76,6 @@ jobs:
           s = s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
           s = s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
           s = s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
-
           s = s.replace(
               'scaffoldBackgroundColor: const Color(0xfff5f6f8),',
               'scaffoldBackgroundColor: Colors.transparent,',
@@ -104,7 +103,7 @@ jobs:
           d.write_text(s)
 
           pub = Path('app/pubspec.yaml')
-          y = pub.read_text()
+          y = pub.read_text().replace('version: 16.0.0+43', 'version: 16.0.1+44')
           asset = '    - assets/background/n07_background_vertical.jpg'
           if asset not in y:
               if '  assets:\n' in y:
