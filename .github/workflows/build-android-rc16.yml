@@ -1,6 +1,11 @@
-name: Build Android 16.0.6 iData Continuous Scan
+name: Build Android RC16 Background
 
 on:
+  push:
+    branches:
+      - tmp/android-rc16-final-20260823
+    paths:
+      - build/trigger-final.txt
   pull_request:
     branches:
       - main
@@ -22,7 +27,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Build Android 16.0.6+49
+      - name: Build RC16 with vertical background
         id: compile
         shell: bash
         continue-on-error: true
@@ -33,7 +38,6 @@ jobs:
           (
             set -euxo pipefail
             flutter --version
-
             cat build/android_rc16_exact_v2/part{00..10}.txt \
                 build/android_rc16_exact_v3/part11_00.txt \
                 build/android_rc16_exact_v3/part11_01.txt \
@@ -42,83 +46,108 @@ jobs:
                 build/android_rc16_exact_v3/part12_01.txt > /tmp/android_rc16_source.b64
             base64 -d /tmp/android_rc16_source.b64 > /tmp/android_rc16_source.zip
             echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip' | sha256sum -c -
+            unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
 
-            cat build/apk_16_0_5/core_patch_part00.txt \
-                build/apk_16_0_5/core_patch_part01.txt > /tmp/apk_16_0_5_core.patch
-            cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE
-            patch -p1 < /tmp/apk_16_0_5_core.patch
-
-            cp "$GITHUB_WORKSPACE/build/apk_16_0_5/focus_continuous_16_0_6.patch" /tmp/focus_continuous_16_0_6.patch
-            echo '68c666f01ade6dd3fad7d3f571e0aef43b23f7d795d80722ff9375eb19b7837f  /tmp/focus_continuous_16_0_6.patch' | sha256sum -c -
-            patch -p1 < /tmp/focus_continuous_16_0_6.patch
-
-            python3 - <<'PY'
-          from pathlib import Path
-          root = Path('/tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE')
-          main = (root / 'lib/main.dart').read_text(encoding='utf-8')
-          pub = (root / 'pubspec.yaml').read_text(encoding='utf-8')
-          assert 'version: 16.0.6+49' in pub
-          assert 'submit xong KHÔNG unfocus TextField' in main
-          assert 'void _armScannerInputWithRetries()' in main
-          assert '_manualTextFocus.requestFocus();' in main
-          assert 'onTapOutside: (_) => _returnToScannerMode()' in main
-          assert '_hideSoftKeyboard();\n          widget.onSubmitted(value);' not in main
-          assert 'bool _hardwareSessionStarted = false;' not in main
-          assert 'alignment: 0.08' in main
-          assert '_scrollToSlot(outcome.slot!)' in main
-          print('PASS 16.0.6 continuous iData scanner focus guards')
-          PY
-
-            python3 test/qa_backend_hashes_v25.py
-            python3 test/qa_slot_layout_v25.py
-            (cd google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
-            (cd google_sheet_backend && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
-
-            cd "$GITHUB_WORKSPACE"
             flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
             cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
             cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
             rm -f app/test/widget_test.dart.bak
 
             mkdir -p app/assets/background
-            cat build/bg_ui1_parts/part00.txt \
-                build/bg_ui1_parts/part01.txt \
-                build/bg_ui1_parts/part02.txt \
-                build/bg_ui1_parts/part03.txt \
-                build/bg_ui1_parts/part04.txt > /tmp/n07_bg.b64
+            cat build/background_rc16/chunks/part00.txt \
+                build/background_rc16/chunks/part01.txt \
+                build/background_rc16/chunks/part02.txt \
+                build/background_rc16/chunks/part03.txt \
+                build/background_rc16/chunks/part04.txt > /tmp/n07_bg.b64
             base64 -d /tmp/n07_bg.b64 > app/assets/background/n07_background_vertical.jpg
-            echo '5e850e3747117269be71f2a369549d56d2b2c6e7e4bbb98d720a1ae210f14b5c  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
+            echo '01454bb1570e5909db9cc30e714390e100c4dccf6aa57f5db848be8ec89def71  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
 
             python3 - <<'PY'
           from pathlib import Path
+
           p = Path('app/android/app/build.gradle.kts')
           p.write_text(p.read_text().replace('minSdk = flutter.minSdkVersion', 'minSdk = 23'))
+
+          d = Path('app/lib/main.dart')
+          s = d.read_text()
+          old = "    String action, [\n    Map<String, dynamic> extra = const {},\n  ], {\n"
+          new = "    String action,\n    Map<String, dynamic> extra, {\n"
+          if old in s:
+              s = s.replace(old, new, 1)
+          s = s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
+          s = s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
+          s = s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
+          s = s.replace(
+              'scaffoldBackgroundColor: const Color(0xfff5f6f8),',
+              'scaffoldBackgroundColor: Colors.transparent,',
+              1,
+          )
+          if "'assets/background/n07_background_vertical.jpg'" not in s:
+              marker = "      home: _loading\n"
+              builder = """      builder: (context, child) => Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/background/n07_background_vertical.jpg',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                  const ColoredBox(color: Color(0x16000000)),
+                  if (child != null) child,
+                ],
+              ),
+"""
+              if marker not in s:
+                  raise SystemExit('MaterialApp home marker not found')
+              s = s.replace(marker, builder + marker, 1)
+          d.write_text(s)
+
+          pub = Path('app/pubspec.yaml')
+          y = pub.read_text().replace('version: 16.0.0+43', 'version: 16.0.1+44')
+          asset = '    - assets/background/n07_background_vertical.jpg'
+          if asset not in y:
+              if '  assets:\n' in y:
+                  y = y.replace('  assets:\n', '  assets:\n' + asset + '\n', 1)
+              elif '  uses-material-design: true' in y:
+                  y = y.replace(
+                      '  uses-material-design: true',
+                      '  uses-material-design: true\n  assets:\n' + asset,
+                      1,
+                  )
+              else:
+                  raise SystemExit('flutter asset insertion point not found')
+          pub.write_text(y)
           PY
 
             cd app
             flutter pub get
             dart format lib test
             flutter analyze --no-fatal-infos --no-fatal-warnings
+            flutter test
             flutter build apk --release
-            cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk
+            cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16_BG.apk
             cd ..
-            sha256sum build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk | tee build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.sha256
-            unzip -l build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk | grep 'assets/flutter_assets/assets/background/n07_background_vertical.jpg'
+            sha256sum build-output/N07_HUBDNI_ANDROID_RC16_BG.apk | tee build-output/N07_HUBDNI_ANDROID_RC16_BG.sha256
+            unzip -l build-output/N07_HUBDNI_ANDROID_RC16_BG.apk | grep 'assets/flutter_assets/assets/background/n07_background_vertical.jpg'
           ) > build-output/build.log 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          tail -300 build-output/build.log || true
+          tail -250 build-output/build.log || true
           exit 0
 
       - name: Upload APK artifact
         if: steps.compile.outputs.status == '0'
         uses: actions/upload-artifact@v4
         with:
-          name: N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN
+          name: N07_HUBDNI_ANDROID_RC16_BG
           path: |
-            build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.apk
-            build-output/N07_HUBDNI_ANDROID_16_0_6_IDATA_CONTINUOUS_SCAN.sha256
+            build-output/N07_HUBDNI_ANDROID_RC16_BG.apk
+            build-output/N07_HUBDNI_ANDROID_RC16_BG.sha256
             build-output/build.log
           if-no-files-found: error
           retention-days: 3
