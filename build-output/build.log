@@ -44,12 +44,41 @@ Tools • Dart 3.13.1 • DevTools 2.60.0
 /tmp/n07/base.zip: OK
 + unzip -q /tmp/n07/base.zip -d /tmp/n07/base
 + ROOT=/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
-+ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/core_patch_part00.txt -o /tmp/n07/core0.patch
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/core_patch_part00.txt -o /tmp/n07/core0.raw.patch
 + curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/core_patch_part01.txt -o /tmp/n07/core1.patch
+++ wc -c
++ test 17003 -eq 17003
++ head -c 17000 /tmp/n07/core0.raw.patch
 + cat /tmp/n07/core0.patch /tmp/n07/core1.patch
++ echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/n07/core.patch'
++ sha256sum -c -
+/tmp/n07/core.patch: OK
 + cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
 + patch -p1
 patching file lib/main.dart
-Hunk #22 FAILED at 7840.
-1 out of 31 hunks FAILED -- saving rejects to file lib/main.dart.rej
 patching file pubspec.yaml
++ curl -fsSL https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823/build/apk_16_0_5/focus_continuous_16_0_6.patch -o /tmp/n07/focus.patch
++ echo '68c666f01ade6dd3fad7d3f571e0aef43b23f7d795d80722ff9375eb19b7837f  /tmp/n07/focus.patch'
++ sha256sum -c -
+/tmp/n07/focus.patch: OK
++ cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p1
+patching file lib/main.dart
+patching file pubspec.yaml
++ base64 -d build/android_16_1_1_localfirst/main_patch.gz.b64
++ gzip -d
++ base64 -d build/android_16_1_1_localfirst/local_patch.gz.b64
++ gzip -d
++ cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p1
+can't find file to patch at input line 3
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|--- lib/main.dart.baseline_16_0_6	2026-08-23 14:06:59.712384891 +0000
+|+++ lib/main.dart	2026-08-23 14:57:45.486541312 +0000
+--------------------------
+File to patch: 
+Skip this patch? [y] 
+Skipping patch.
+34 out of 34 hunks ignored
