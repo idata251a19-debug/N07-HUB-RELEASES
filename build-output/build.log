@@ -136,7 +136,7 @@ Upgrading analysis_options.yaml to exclude build and platform directories.
 Formatted lib/local_store.dart
 Formatted lib/main.dart
 Formatted test/widget_test.dart
-Formatted 3 files (3 changed) in 0.20 seconds.
+Formatted 3 files (3 changed) in 0.28 seconds.
 + flutter analyze
 Analyzing app...                                                
 
@@ -158,10 +158,7 @@ warning • The value of the local variable 'search' isn't used. Try removing th
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1106:9 • curly_braces_in_flow_control_structures
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1162:9 • curly_braces_in_flow_control_structures
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1180:9 • curly_braces_in_flow_control_structures
-  error • 2 positional arguments expected by '_call', but 1 found. Try adding the missing arguments • lib/main.dart:1197:64 • not_enough_positional_arguments
-  error • 2 positional arguments expected by '_call', but 1 found. Try adding the missing arguments • lib/main.dart:1211:40 • not_enough_positional_arguments
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1273:7 • curly_braces_in_flow_control_structures
-  error • 2 positional arguments expected by '_call', but 1 found. Try adding the missing arguments • lib/main.dart:1282:46 • not_enough_positional_arguments
    info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/main.dart:1286:9 • curly_braces_in_flow_control_structures
    info • Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' • lib/main.dart:1617:7 • use_null_aware_elements
 warning • The value of the local variable 'data' isn't used. Try removing the variable or using it • lib/main.dart:1688:11 • unused_local_variable
@@ -171,4 +168,4 @@ warning • The value of the local variable 'data' isn't used. Try removing the 
    info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9274:14 • use_build_context_synchronously
    info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9542:14 • use_build_context_synchronously
 
-30 issues found. (ran in 6.1s)
+27 issues found. (ran in 8.1s)
