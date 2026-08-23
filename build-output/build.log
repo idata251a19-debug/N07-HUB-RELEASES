@@ -1,10 +1,64 @@
 + flutter --version
 Flutter 3.47.1 • channel stable • https://github.com/flutter/flutter.git
-Framework • revision 6655482ec0 (3 days ago) • 2026-08-19 10:07:23 -0700
+Framework • revision 6655482ec0 (4 days ago) • 2026-08-19 10:07:23 -0700
 Engine • hash 11d79658c444477b06513d32b52c8c4ccb7276b0 (revision 5d53178869) (4 days ago) • 2026-08-18 23:36:01.000Z
 Tools • Dart 3.13.1 • DevTools 2.60.0
-+ find build/android_rc16_exact_v2 -maxdepth 1 -type f -name 'part*.txt' -print0
-+ sort -zV
-+ xargs -0 cat
++ cat build/android_rc16_exact_v2/part00.txt build/android_rc16_exact_v2/part01.txt build/android_rc16_exact_v2/part02.txt build/android_rc16_exact_v2/part03.txt build/android_rc16_exact_v2/part04.txt build/android_rc16_exact_v2/part05.txt build/android_rc16_exact_v2/part06.txt build/android_rc16_exact_v2/part07.txt build/android_rc16_exact_v2/part08.txt build/android_rc16_exact_v2/part09.txt build/android_rc16_exact_v2/part10.txt build/android_rc16_exact_v3/part11_00.txt build/android_rc16_exact_v3/part11_01.txt build/android_rc16_exact_v3/part11_02.txt build/android_rc16_exact_v3/part12_00.txt build/android_rc16_exact_v3/part12_01.txt
 + base64 -d /tmp/android_rc16_source.b64
-base64: invalid input
++ echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip'
++ sha256sum -c -
+/tmp/android_rc16_source.zip: OK
++ unzip -t /tmp/android_rc16_source.zip
+Archive:  /tmp/android_rc16_source.zip
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/SHA256.txt   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/lib/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/lib/local_store.dart   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/lib/main.dart   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/assets/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/assets/background/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/assets/background/README.txt   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/02_BUILD_APK_RELEASE_N07_HUBDNI_ANDROID_V14_V25.bat   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/SOURCE_MANIFEST_ANDROID_V14_V25.md   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/HUONG_DAN_ANDROID_V14_V25_CHO_NGUOI_MOI.md   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/CHANGELOG_ANDROID_V14_V25.md   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/01_UPDATE_SOURCE_AND_TEST_N07_HUBDNI_ANDROID_V14_V25.bat   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/analysis_options.yaml   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/AndroidManifest.xml   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code.gs   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_VF_E2W_V25.gs   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_AUTO_EV_V25.gs   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/static_qa_v25.py   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/test/widget_test.dart   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/03_RUN_DEBUG_PIXEL7_N07_HUBDNI_ANDROID_V14_V25.bat   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/README_BAT_DAU_NHANH.txt   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/PHAM_VI_DONG_BO_ANDROID_PC_V25.md   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/QA_ANDROID_V14_V25.md   OK
+    testing: N07_HUBDNI_ANDROID_RC16_SOURCE/pubspec.yaml   OK
+No errors detected in compressed data of /tmp/android_rc16_source.zip.
++ unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
++ python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
+PASS backend hashes: Code.gs=VF V25; VF/AUTO match PC v2.5
++ python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
+PASS slot/layout QA: envelope=4320, VF=432, AUTO(max)=648, mapping unique
++ node /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_VF_E2W_V25.gs
+/tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js:4
+if(!/^Code_(VF_E2W|AUTO_EV)_V25\.gs$/.test(backend))throw new Error('backend argument not allowed');
+                                                    ^
+
+Error: backend argument not allowed
+    at Object.<anonymous> (/tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js:4:59)
+    at Module._compile (node:internal/modules/cjs/loader:1781:14)
+    at Object..js (node:internal/modules/cjs/loader:1913:10)
+    at Module.load (node:internal/modules/cjs/loader:1505:32)
+    at Function._load (node:internal/modules/cjs/loader:1309:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.23.2
