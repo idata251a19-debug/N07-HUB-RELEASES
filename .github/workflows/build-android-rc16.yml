@@ -72,8 +72,8 @@ jobs:
 
             base64 -d build/android_16_1_1_localfirst/main_patch.gz.b64 | gzip -d > /tmp/n07/main.patch
             base64 -d build/android_16_1_1_localfirst/local_patch.gz.b64 | gzip -d > /tmp/n07/local.patch
-            (cd "$ROOT" && patch -p1 < /tmp/n07/main.patch)
-            (cd "$ROOT" && patch -p1 < /tmp/n07/local.patch)
+            (cd "$ROOT" && patch -p0 < /tmp/n07/main.patch)
+            (cd "$ROOT" && patch -p0 < /tmp/n07/local.patch)
 
             python3 - <<'PY'
           from pathlib import Path
