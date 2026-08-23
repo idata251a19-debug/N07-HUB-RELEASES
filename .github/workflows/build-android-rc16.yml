@@ -43,8 +43,8 @@ jobs:
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
             python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
             python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
-            node /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_VF_E2W_V25.gs
-            node /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_AUTO_EV_V25.gs
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
             flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
             cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
             cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
