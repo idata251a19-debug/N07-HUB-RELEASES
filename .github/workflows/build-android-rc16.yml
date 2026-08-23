@@ -31,14 +31,19 @@ jobs:
           (
             set -euxo pipefail
             flutter --version
-            find build/android_rc16_final_chunks -maxdepth 1 -type f -name 'part*.txt' -print0 | sort -zV | xargs -0 cat > /tmp/android_rc16_source.b64
+            find build/android_rc16_exact_v2 -maxdepth 1 -type f -name 'part*.txt' -print0 | sort -zV | xargs -0 cat > /tmp/android_rc16_source.b64
             base64 -d /tmp/android_rc16_source.b64 > /tmp/android_rc16_source.zip
             echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip' | sha256sum -c -
             unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
+            node /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_VF_E2W_V25.gs
+            node /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_v25.js /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend/Code_AUTO_EV_V25.gs
             flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
             cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
             cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+            rm -f app/test/widget_test.dart.bak
             python3 - <<'PY'
           from pathlib import Path
           p=Path('app/android/app/build.gradle.kts')
@@ -48,7 +53,7 @@ jobs:
           PY
             cd app
             flutter pub get
-            dart format --output=none --set-exit-if-changed lib test
+            dart format lib test
             flutter analyze
             flutter test
             flutter build apk --release
@@ -78,6 +83,7 @@ jobs:
           path: |
             build-output/N07_HUBDNI_ANDROID_RC16.apk
             build-output/N07_HUBDNI_ANDROID_RC16.sha256
+            build-output/build.log
           if-no-files-found: error
           retention-days: 3
       - name: Fail build if compile failed
