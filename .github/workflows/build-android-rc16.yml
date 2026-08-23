@@ -60,7 +60,11 @@ jobs:
           new="    String action,\n    Map<String, dynamic> extra, {\n"
           if old not in s:
               raise SystemExit('expected _call signature not found')
-          d.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          s=s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
+          s=s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
+          s=s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
+          d.write_text(s)
           PY
             cd app
             flutter pub get
