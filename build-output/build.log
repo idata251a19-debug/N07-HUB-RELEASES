@@ -42,43 +42,8 @@ Archive:  /tmp/android_rc16_source.zip
     testing: N07_HUBDNI_ANDROID_RC16_SOURCE/pubspec.yaml   OK
 No errors detected in compressed data of /tmp/android_rc16_source.zip.
 + unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
-+ python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
-PASS backend hashes: Code.gs=VF V25; VF/AUTO match PC v2.5
-+ python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
-PASS slot/layout QA: envelope=4320, VF=432, AUTO(max)=648, mapping unique
-+ cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend
-+ node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs
-{"PASS":true,"backend":"Code_VF_E2W_V25.gs","importSuccess":50,"importTonSetValues":1,"importTonRows":50,"exportSuccess":50,"groupedDelete":[{"r":2,"n":50}],"historyRows":50}
-+ cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend
-+ node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs
-{"PASS":true,"backend":"Code_AUTO_EV_V25.gs","importSuccess":50,"importTonSetValues":1,"importTonRows":50,"exportSuccess":50,"groupedDelete":[{"r":2,"n":50}],"historyRows":50}
-+ flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
-Creating project app...
-Resolving dependencies in `app`...
-Downloading packages...
-Got dependencies in `app`.
-Wrote 35 files.
-
-All done!
-You can find general documentation for Flutter at: https://docs.flutter.dev/
-Detailed API documentation is available at: https://api.flutter.dev/
-If you prefer video documentation, consider: https://www.youtube.com/c/flutterdev
-
-In order to run your application, type:
-
-  $ cd app
-  $ flutter run
-
-Your application code is in app/lib/main.dart.
-
-+ cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
-+ cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
-+ rm -f app/test/widget_test.dart.bak
-+ mkdir -p app/assets/background
-+ cat build/background_rc16/chunks/part00.txt build/background_rc16/chunks/part01.txt build/background_rc16/chunks/part02.txt build/background_rc16/chunks/part03.txt build/background_rc16/chunks/part04.txt
-+ base64 -d /tmp/n07_bg.b64
-+ echo '01454bb1570e5909db9cc30e714390e100c4dccf6aa57f5db848be8ec89def71  app/assets/background/n07_background_vertical.jpg'
++ cat build/apk_16_0_5/core_patch_part00.txt build/apk_16_0_5/core_patch_part01.txt
++ echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/apk_16_0_5_core.patch'
 + sha256sum -c -
-app/assets/background/n07_background_vertical.jpg: OK
-+ python3 -
-void main() not found
+/tmp/apk_16_0_5_core.patch: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
