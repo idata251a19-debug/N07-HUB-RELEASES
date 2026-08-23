@@ -1,1 +1,1 @@
-N07 HUBDNI Android 16.0.5+48 iData scanner resume fix build
+N07 HUBDNI Android 16.0.5+48 iData scanner resume fix build attempt 2
