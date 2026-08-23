@@ -1,0 +1,215 @@
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -9478,9 +9478,8 @@
+ 
+ class _ScannerTextFieldState extends State<_ScannerTextField> with WidgetsBindingObserver {
+   bool _manualKeyboard = false;
+-  bool _hardwareSessionStarted = false;
+   final FocusNode _manualTextFocus = FocusNode(
+-    debugLabel: 'n07-scanner-manual-text',
++    debugLabel: 'n07-scanner-text-input',
+   );
+ 
+   @override
+@@ -9488,7 +9487,7 @@
+     super.initState();
+     WidgetsBinding.instance.addObserver(this);
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+-      if (mounted && widget.enabled) _armHardwareScanner();
++      if (mounted && widget.enabled) _armScannerInput();
+     });
+   }
+ 
+@@ -9505,23 +9504,25 @@
+     return route == null || route.isCurrent;
+   }
+ 
+-  void _armHardwareScanner() {
++  // iData đang hoạt động theo keyboard-wedge/IME: scanner cần một TextField
++  // còn focus để nhận mã. Vì vậy KHÔNG chuyển focus sang Focus widget sau khi
++  // scan xong; chỉ ẩn bàn phím mềm và giữ TextField focus ngầm liên tục.
++  void _armScannerInput() {
+     if (!mounted || !widget.enabled || !_routeIsCurrent()) return;
+     if (_manualKeyboard) return;
+ 
+-    _manualTextFocus.unfocus();
+-    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+-    if (widget.focusNode.canRequestFocus) {
+-      widget.focusNode.requestFocus();
++    if (!_manualTextFocus.hasFocus && _manualTextFocus.canRequestFocus) {
++      _manualTextFocus.requestFocus();
+     }
++    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+   }
+ 
+-  void _armHardwareScannerWithRetries() {
+-    _armHardwareScanner();
+-    for (final delayMs in <int>[80, 180, 360, 700]) {
++  void _armScannerInputWithRetries() {
++    _armScannerInput();
++    for (final delayMs in <int>[40, 100, 220, 450, 800]) {
+       Future<void>.delayed(Duration(milliseconds: delayMs), () {
+         if (!mounted || !widget.enabled || _manualKeyboard) return;
+-        _armHardwareScanner();
++        _armScannerInput();
+       });
+     }
+   }
+@@ -9533,7 +9534,6 @@
+         state == AppLifecycleState.hidden ||
+         state == AppLifecycleState.detached) {
+       _manualKeyboard = false;
+-      _hardwareSessionStarted = false;
+       _manualTextFocus.unfocus();
+       widget.focusNode.unfocus();
+       SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+@@ -9542,17 +9542,22 @@
+ 
+     if (state == AppLifecycleState.resumed && widget.enabled) {
+       _manualKeyboard = false;
+-      _hardwareSessionStarted = false;
+-      // iData có thể trả HID về muộn hơn Flutter resume. Arm nhiều nhịp để
+-      // không cần thoát/mở app khi vừa bật màn hình hoặc foreground lại.
+-      _armHardwareScannerWithRetries();
++      // Sau sleep/foreground, iData có thể trả keyboard-wedge về chậm.
++      // Request lại chính TextField nhiều nhịp để khôi phục input connection.
++      _armScannerInputWithRetries();
+     }
+   }
+ 
+   KeyEventResult _onHardwareKeyEvent(FocusNode node, KeyEvent event) {
+-    if (!widget.enabled || _manualKeyboard || !_routeIsCurrent()) {
++    if (!widget.enabled || !_routeIsCurrent()) {
+       return KeyEventResult.ignored;
+     }
++
++    // Khi TextField đang giữ focus (trạng thái bình thường của iData), để
++    // EditableText xử lý key/IME tự nhiên. Handler này chỉ là fallback nếu
++    // focus TextField chưa kịp hồi sau lifecycle/rebuild.
++    if (_manualTextFocus.hasFocus) return KeyEventResult.ignored;
++    if (_manualKeyboard) return KeyEventResult.ignored;
+     if (event is! KeyDownEvent) return KeyEventResult.handled;
+ 
+     final logicalKey = event.logicalKey;
+@@ -9560,9 +9565,8 @@
+         logicalKey == LogicalKeyboardKey.numpadEnter ||
+         logicalKey == LogicalKeyboardKey.tab) {
+       final value = widget.controller.text;
+-      _hardwareSessionStarted = false;
+       widget.onSubmitted(value);
+-      _armHardwareScannerWithRetries();
++      _armScannerInputWithRetries();
+       return KeyEventResult.handled;
+     }
+ 
+@@ -9582,19 +9586,10 @@
+     if (character == null || character.isEmpty) {
+       return KeyEventResult.handled;
+     }
+-
+-    // Chỉ nhận ký tự in được. iData HID bắn chuỗi rất nhanh rồi Enter/Tab.
+     if (character.runes.any((rune) => rune < 0x20 || rune == 0x7f)) {
+       return KeyEventResult.handled;
+     }
+ 
+-    if (!_hardwareSessionStarted) {
+-      // Bill/mã mới luôn ghi đè dữ liệu scan trước, tránh nối chuỗi khi màn
+-      // hình vừa resume hoặc controller còn giữ mã cũ.
+-      widget.controller.clear();
+-      _hardwareSessionStarted = true;
+-    }
+-
+     final next = '${widget.controller.text}$character';
+     widget.controller.value = TextEditingValue(
+       text: next,
+@@ -9603,38 +9598,27 @@
+     return KeyEventResult.handled;
+   }
+ 
+-  void _hideSoftKeyboard({bool returnToScanner = true}) {
++  void _returnToScannerMode() {
+     if (_manualKeyboard && mounted) {
+       setState(() => _manualKeyboard = false);
+     }
+-    _hardwareSessionStarted = false;
+-    _manualTextFocus.unfocus();
+     SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+-    if (returnToScanner) {
+-      _armHardwareScannerWithRetries();
+-    }
++    _armScannerInputWithRetries();
+   }
+ 
+   void _showSoftKeyboardFromTap() {
+     if (!widget.enabled) return;
+-    _hardwareSessionStarted = false;
+-    widget.focusNode.unfocus();
+     if (!_manualKeyboard) {
+       setState(() => _manualKeyboard = true);
+     }
++    if (!_manualTextFocus.hasFocus && _manualTextFocus.canRequestFocus) {
++      _manualTextFocus.requestFocus();
++    }
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+-      if (!mounted || !widget.enabled) return;
+-      if (!_manualTextFocus.hasFocus) {
+-        _manualTextFocus.requestFocus();
+-      }
++      if (!mounted || !widget.enabled || !_manualKeyboard) return;
+       SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+       Future<void>.delayed(const Duration(milliseconds: 240), () {
+-        if (!mounted ||
+-            !_manualKeyboard ||
+-            !widget.enabled ||
+-            !_manualTextFocus.hasFocus) {
+-          return;
+-        }
++        if (!mounted || !_manualKeyboard || !widget.enabled) return;
+         SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+       });
+     });
+@@ -9645,12 +9629,11 @@
+     super.didUpdateWidget(oldWidget);
+     if (!widget.enabled) {
+       _manualKeyboard = false;
+-      _hardwareSessionStarted = false;
+       _manualTextFocus.unfocus();
+       widget.focusNode.unfocus();
+       SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+     } else if (!oldWidget.enabled && widget.enabled) {
+-      _armHardwareScannerWithRetries();
++      _armScannerInputWithRetries();
+     }
+   }
+ 
+@@ -9670,15 +9653,15 @@
+         enableSuggestions: false,
+         textCapitalization: TextCapitalization.characters,
+         textInputAction: TextInputAction.done,
+-        // TextField chỉ phục vụ gõ tay. iData/HID được bắt bằng Focus.onKeyEvent
+-        // ở phía trên, nên scanner không còn phụ thuộc Android IME/TextInput.
+         keyboardType: TextInputType.text,
+         onTap: _showSoftKeyboardFromTap,
+-        onTapOutside: (_) => _hideSoftKeyboard(),
++        onTapOutside: (_) => _returnToScannerMode(),
+         onEditingComplete: () {},
+         onSubmitted: (value) {
+-          _hideSoftKeyboard();
++          // Cực quan trọng với iData: submit xong KHÔNG unfocus TextField.
++          // Chỉ ẩn soft keyboard và request lại focus để mã kế tiếp bắn ngay.
+           widget.onSubmitted(value);
++          _returnToScannerMode();
+         },
+         decoration: widget.decoration,
+       ),
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,7 +1,7 @@
+ name: n07_hub_v1
+ description: N07 HUBDNI Android - field operations synchronized with N07 HUBDNI PC.
+ publish_to: 'none'
+-version: 16.0.5+48
++version: 16.0.6+49
+ 
+ environment:
+   sdk: '>=3.10.0 <4.0.0'
