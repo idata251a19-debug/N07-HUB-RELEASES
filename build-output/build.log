@@ -43,7 +43,9 @@ Archive:  /tmp/android_rc16_source.zip
 No errors detected in compressed data of /tmp/android_rc16_source.zip.
 + unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
 + cat build/apk_16_0_5/core_patch_part00.txt build/apk_16_0_5/core_patch_part01.txt
-+ echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/apk_16_0_5_core.patch'
-+ sha256sum -c -
-/tmp/apk_16_0_5_core.patch: FAILED
-sha256sum: WARNING: 1 computed checksum did NOT match
++ cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p1
+patching file lib/main.dart
+Hunk #22 FAILED at 7840.
+1 out of 31 hunks FAILED -- saving rejects to file lib/main.dart.rej
+patching file pubspec.yaml
