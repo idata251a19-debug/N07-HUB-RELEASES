@@ -43,8 +43,9 @@ jobs:
             unzip -t /tmp/android_rc16_source.zip
             unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
 
-            cat build/apk_16_0_5/core_patch_part00.txt \
-                build/apk_16_0_5/core_patch_part01.txt > /tmp/apk_16_0_5_core.patch
+            cat build/apk_16_0_5/core_patch_part00.txt > /tmp/apk_16_0_5_core.patch
+            printf '\n' >> /tmp/apk_16_0_5_core.patch
+            tail -n +2 build/apk_16_0_5/core_patch_part01.txt >> /tmp/apk_16_0_5_core.patch
             cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE
             patch -p1 < /tmp/apk_16_0_5_core.patch
 
