@@ -1,4 +1,4 @@
-name: Build Android 16.1.1 Local First
+name: Build Android 16.1.1 Final Local First
 
 on:
   push:
@@ -6,21 +6,20 @@ on:
       - tmp/android-16-1-1-localfirst-build-20260823
     paths:
       - .github/workflows/build-android-rc16.yml
-      - build/trigger-1611.txt
+      - build/trigger-final-1611.txt
   pull_request:
-    branches:
-      - main
+    branches: [main]
     paths:
       - .github/workflows/build-android-rc16.yml
-      - build/trigger-1611.txt
+      - build/trigger-final-1611.txt
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -28,155 +27,148 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Reconstruct and build Android 16.1.1+51
+      - name: Final verify and build
         id: compile
         shell: bash
-        continue-on-error: true
         run: |
-          set +e
+          set -euxo pipefail
           rm -rf build-output /tmp/n07 app
           mkdir -p build-output /tmp/n07/base /tmp/n07/download
-          (
-            set -euxo pipefail
-            flutter --version
-            OLD='https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823'
+          OLD='https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823'
 
-            for i in $(seq -w 0 10); do
-              curl -fsSL "$OLD/build/android_rc16_exact_v2/part${i}.txt" -o "/tmp/n07/download/v2_${i}.txt"
-            done
-            for f in part11_00 part11_01 part11_02 part12_00 part12_01; do
-              curl -fsSL "$OLD/build/android_rc16_exact_v3/${f}.txt" -o "/tmp/n07/download/${f}.txt"
-            done
-            cat /tmp/n07/download/v2_*.txt \
-                /tmp/n07/download/part11_00.txt \
-                /tmp/n07/download/part11_01.txt \
-                /tmp/n07/download/part11_02.txt \
-                /tmp/n07/download/part12_00.txt \
-                /tmp/n07/download/part12_01.txt > /tmp/n07/base.b64
-            base64 -d /tmp/n07/base.b64 > /tmp/n07/base.zip
-            echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/n07/base.zip' | sha256sum -c -
-            unzip -q /tmp/n07/base.zip -d /tmp/n07/base
-            ROOT=/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
+          for i in $(seq -w 0 10); do curl -fsSL "$OLD/build/android_rc16_exact_v2/part${i}.txt" -o "/tmp/n07/download/v2_${i}.txt"; done
+          for f in part11_00 part11_01 part11_02 part12_00 part12_01; do curl -fsSL "$OLD/build/android_rc16_exact_v3/${f}.txt" -o "/tmp/n07/download/${f}.txt"; done
+          cat /tmp/n07/download/v2_*.txt /tmp/n07/download/part11_00.txt /tmp/n07/download/part11_01.txt /tmp/n07/download/part11_02.txt /tmp/n07/download/part12_00.txt /tmp/n07/download/part12_01.txt > /tmp/n07/base.b64
+          base64 -d /tmp/n07/base.b64 > /tmp/n07/base.zip
+          echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/n07/base.zip' | sha256sum -c -
+          unzip -q /tmp/n07/base.zip -d /tmp/n07/base
+          ROOT=/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
 
-            curl -fsSL "$OLD/build/apk_16_0_5/core_patch_part00.txt" -o /tmp/n07/core0.raw.patch
-            curl -fsSL "$OLD/build/apk_16_0_5/core_patch_part01.txt" -o /tmp/n07/core1.patch
-            test "$(wc -c < /tmp/n07/core0.raw.patch)" -eq 17003
-            head -c 17000 /tmp/n07/core0.raw.patch > /tmp/n07/core0.patch
-            cat /tmp/n07/core0.patch /tmp/n07/core1.patch > /tmp/n07/core.patch
-            echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/n07/core.patch' | sha256sum -c -
-            (cd "$ROOT" && patch -p1 < /tmp/n07/core.patch)
+          curl -fsSL "$OLD/build/apk_16_0_5/core_patch_part00.txt" -o /tmp/n07/core0.raw.patch
+          curl -fsSL "$OLD/build/apk_16_0_5/core_patch_part01.txt" -o /tmp/n07/core1.patch
+          test "$(wc -c < /tmp/n07/core0.raw.patch)" -eq 17003
+          head -c 17000 /tmp/n07/core0.raw.patch > /tmp/n07/core0.patch
+          cat /tmp/n07/core0.patch /tmp/n07/core1.patch > /tmp/n07/core.patch
+          echo '2517c7825b3d65240b1e7359a6c8fc63fb4bfe3225128028a205d6e410a669d1  /tmp/n07/core.patch' | sha256sum -c -
+          (cd "$ROOT" && patch -p1 < /tmp/n07/core.patch)
 
-            curl -fsSL "$OLD/build/apk_16_0_5/focus_continuous_16_0_6.patch" -o /tmp/n07/focus.patch
-            echo '68c666f01ade6dd3fad7d3f571e0aef43b23f7d795d80722ff9375eb19b7837f  /tmp/n07/focus.patch' | sha256sum -c -
-            (cd "$ROOT" && patch -p1 < /tmp/n07/focus.patch)
+          curl -fsSL "$OLD/build/apk_16_0_5/focus_continuous_16_0_6.patch" -o /tmp/n07/focus.patch
+          echo '68c666f01ade6dd3fad7d3f571e0aef43b23f7d795d80722ff9375eb19b7837f  /tmp/n07/focus.patch' | sha256sum -c -
+          (cd "$ROOT" && patch -p1 < /tmp/n07/focus.patch)
 
-            base64 -d build/android_16_1_1_localfirst/main_patch.gz.b64 | gzip -d > /tmp/n07/main.patch
-            base64 -d build/android_16_1_1_localfirst/local_patch.gz.b64 | gzip -d > /tmp/n07/local.patch
-            (cd "$ROOT" && patch -p0 < /tmp/n07/main.patch)
-            (cd "$ROOT" && patch -p0 < /tmp/n07/local.patch)
+          base64 -d build/android_16_1_1_localfirst/main_patch.gz.b64 | gzip -d > /tmp/n07/main.patch
+          base64 -d build/android_16_1_1_localfirst/local_patch.gz.b64 | gzip -d > /tmp/n07/local.patch
+          (cd "$ROOT" && patch -p0 < /tmp/n07/main.patch)
+          (cd "$ROOT" && patch -p0 < /tmp/n07/local.patch)
 
-            python3 - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-          import hashlib, re
-          root = Path('/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE')
-          mainp = root/'lib/main.dart'
-          s = mainp.read_text(encoding='utf-8')
-          old = "const Duration(seconds: 15),\n      (_) => unawaited(_retrySyncIfNeeded()),"
-          new = "const Duration(seconds: 60),\n      (_) => unawaited(_retrySyncIfNeeded()),"
-          if old not in s:
-              raise SystemExit('expected reconstruction retry=15 marker missing')
-          s = s.replace(old, new, 1)
-          mainp.write_text(s, encoding='utf-8')
-          pub = root/'pubspec.yaml'
-          y = pub.read_text(encoding='utf-8')
-          y = re.sub(r'(?m)^version:\s*[^\n]+$', 'version: 16.1.1+51', y, count=1)
-          pub.write_text(y, encoding='utf-8')
-
-          main = mainp.read_text(encoding='utf-8')
-          local = (root/'lib/local_store.dart').read_text(encoding='utf-8')
-          assert 'version: 16.1.1+51' in pub.read_text()
-          assert "const Duration(seconds: 60),\n      (_) => unawaited(_retrySyncIfNeeded())," in main
-          assert "if (!mounted || !_appActive || _sessionExpired || _switchingWarehouse) return;" in main
-          assert 'forcePull:' not in main
-          assert '_snapshotFromSupabase' not in main
+          import hashlib,re
+          root=Path('/tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE')
+          p=root/'lib/main.dart'; s=p.read_text()
+          old="const Duration(seconds: 15),\n      (_) => unawaited(_retrySyncIfNeeded()),"
+          new="const Duration(seconds: 60),\n      (_) => unawaited(_retrySyncIfNeeded()),"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
+          pub=root/'pubspec.yaml'; y=pub.read_text(); pub.write_text(re.sub(r'(?m)^version:\s*[^\n]+$','version: 16.1.1+51',y,count=1))
+          main=p.read_text(); local=(root/'lib/local_store.dart').read_text()
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='9e002b98ce8325da85cbd770aa0b45f0a961110af3c1cf1062874e2cbbb1ad6e'
+          assert hashlib.sha256((root/'lib/local_store.dart').read_bytes()).hexdigest()=='f241b1a905a538443ed37af79538ec830e961f2ac4276bf17a72f84459aaf146'
+          assert hashlib.sha256(pub.read_bytes()).hexdigest()=='23d55eea0e7e0dc66e74e5b4aeb2a6d80cb048a8f52c17b104c386a233159fba'
+          assert 'forcePull:' not in main and '_snapshotFromSupabase' not in main
           assert "_apiAction('SYNC_PULL', extra: const {'sinceRevision': -1})" not in main
           assert "_apiAction('SYNC_PULL', extra: const {'sinceRevision': 9007199254740991})" in main
           assert "'action': 'SYNC_PULL_ALL'" in main
           assert "'inventoryMode': includeFullInventory ? 'full' : 'delta'" in main
           assert "snapshot['inventoryDelta']" in main and "snapshot['removedPinCodes']" in main
-          assert "reason: 'location_missing_delta'" in main
-          assert "reason: 'location_missing_layout_recovery'" in main
-          assert 'limit: 5000' not in main
-          assert 'version: 11' in local
-          assert hashlib.sha256(mainp.read_bytes()).hexdigest() == '9e002b98ce8325da85cbd770aa0b45f0a961110af3c1cf1062874e2cbbb1ad6e'
-          assert hashlib.sha256((root/'lib/local_store.dart').read_bytes()).hexdigest() == 'f241b1a905a538443ed37af79538ec830e961f2ac4276bf17a72f84459aaf146'
-          assert hashlib.sha256(pub.read_bytes()).hexdigest() == '23d55eea0e7e0dc66e74e5b4aeb2a6d80cb048a8f52c17b104c386a233159fba'
-          a = main.index('class _ScannerTextField extends StatefulWidget')
-          b = main.index('class ContinuousScanFeedback', a)
-          scanner = hashlib.sha256(main[a:b].encode()).hexdigest()
-          assert scanner == 'cbfde5817cb547ee79c3d9fbe39043fb1354a1670f9ffa71da20b9aed9a128cc', scanner
-          print('PASS candidate exact hashes; scanner='+scanner)
+          assert "reason: 'location_missing_delta'" in main and "reason: 'location_missing_layout_recovery'" in main
+          assert 'limit: 5000' not in main and 'version: 11' in local
+          assert "const Duration(seconds: 60),\n      (_) => unawaited(_retrySyncIfNeeded())," in main
+          assert "if (!mounted || !_appActive || _sessionExpired || _switchingWarehouse) return;" in main
+          a=main.index('class _ScannerTextField extends StatefulWidget'); b=main.index('class ContinuousScanFeedback',a)
+          scanner=hashlib.sha256(main[a:b].encode()).hexdigest()
+          assert scanner=='cbfde5817cb547ee79c3d9fbe39043fb1354a1670f9ffa71da20b9aed9a128cc'
+          print('PASS exact candidate; scanner='+scanner)
           PY
 
-            python3 "$ROOT/test/qa_backend_hashes_v25.py"
-            python3 "$ROOT/test/qa_slot_layout_v25.py"
-            (cd "$ROOT/google_sheet_backend" && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
-            (cd "$ROOT/google_sheet_backend" && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
+          python3 "$ROOT/test/qa_backend_hashes_v25.py"
+          python3 "$ROOT/test/qa_slot_layout_v25.py"
+          (cd "$ROOT/google_sheet_backend" && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
+          (cd "$ROOT/google_sheet_backend" && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
 
-            flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
-            cp -a "$ROOT"/. app/
-            cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
-            rm -f app/test/widget_test.dart.bak
-            python3 - <<'PY'
+          mkdir -p "$ROOT/assets/background"
+          cat build/android_16_1_1_localfirst/bg_exact_final/part{00..11}.txt | base64 -d > "$ROOT/assets/background/n07_background_vertical.jpg"
+          echo '96c6b8396dcf5184a682455263d7a593433f0865f8765b1e67d209f934ad4a70  /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE/assets/background/n07_background_vertical.jpg' | sha256sum -c -
+
+          # Real read-only Edge regression: Android delta and legacy/full client contract.
+          EDGE='https://adixviiotaldvxcgshyt.supabase.co/functions/v1/n07-sync-v2'
+          ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYXNlIiwicmVmIjoiYWRpeHZpaW90YWxkdnhjZ3NoeXQiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NzIyMjI0MSwiZXhwIjoyMTAyNzk4MjQxfQ.1rKqUezdnRDCglDISDNvic9rkmUkDe_veuiJspR-AWk'
+          TOKEN='N07-CI-1611-gpOSBmSqx18UcOmVLXYH2KaAn_jdaK9f'
+          DEVICE='CI-N07-1611-24aa7acf79ca'
+          curl -fsS "$EDGE" -H "apikey: $ANON" -H 'content-type: application/json' --data-binary "{\"action\":\"SYNC_PULL_ALL\",\"sessionToken\":\"$TOKEN\",\"deviceId\":\"$DEVICE\",\"activeWarehouseId\":\"VF_E2W\",\"revisions\":{\"VF_E2W\":151},\"layoutVersions\":{\"VF_E2W\":\"2026-08-23T12:44:31.80992+00:00\"},\"includeInventory\":false,\"inventoryMode\":\"delta\"}" > build-output/network-delta.json
+          curl -fsS "$EDGE" -H "apikey: $ANON" -H 'content-type: application/json' --data-binary "{\"action\":\"SYNC_PULL_ALL\",\"sessionToken\":\"$TOKEN\",\"deviceId\":\"$DEVICE\",\"activeWarehouseId\":\"VF_E2W\",\"revisions\":{\"VF_E2W\":151},\"layoutVersions\":{\"VF_E2W\":\"2026-08-23T12:44:31.80992+00:00\"},\"includeInventory\":true}" > build-output/network-legacy.json
+          python3 - <<'PY'
+          import json,os
+          d=json.load(open('build-output/network-delta.json')); l=json.load(open('build-output/network-legacy.json'))
+          assert d.get('ok') is True and l.get('ok') is True
+          assert len(d['snapshots'])==1 and len(l['snapshots'])==1
+          ds=d['snapshots'][0]; ls=l['snapshots'][0]
+          assert ds['warehouseId']=='VF_E2W' and ds['revision']==152
+          assert len(ds['slots'])==0 and ds['stateIncluded'] is False
+          assert len(ds['history'])==1 and ds['history'][0]['serverRevision']==152
+          assert ds['history'][0]['pinCode']=='VTPVN9045745841'
+          assert len(ds['inventoryDelta'])==1 and ds['inventoryDelta'][0]['code']=='VTPVN9045745841'
+          assert ds['removedPinCodes']==[] and ds['inventory']==[]
+          assert ls['warehouseId']=='VF_E2W' and ls['revision']==152
+          assert len(ls['slots'])==0 and ls['stateIncluded'] is True
+          assert len(ls['history'])==1 and len(ls['inventory'])==5
+          open('build-output/network-proof.txt','w').write(
+            f"DELTA bytes={os.path.getsize('build-output/network-delta.json')} slots={len(ds['slots'])} history={len(ds['history'])} inventoryDelta={len(ds['inventoryDelta'])} removed={len(ds['removedPinCodes'])} fullInventory={len(ds['inventory'])}\n"
+            f"LEGACY bytes={os.path.getsize('build-output/network-legacy.json')} slots={len(ls['slots'])} history={len(ls['history'])} inventory={len(ls['inventory'])} stateIncluded={ls['stateIncluded']}\n")
+          PY
+
+          flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
+          cp -a "$ROOT"/. app/
+          cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+          rm -f app/test/widget_test.dart.bak
+          python3 - <<'PY'
           from pathlib import Path
-          p = Path('app/android/app/build.gradle.kts')
-          p.write_text(p.read_text().replace('minSdk = flutter.minSdkVersion', 'minSdk = 23'))
+          p=Path('app/android/app/build.gradle.kts'); p.write_text(p.read_text().replace('minSdk = flutter.minSdkVersion','minSdk = 23'))
           PY
+          cd app
+          flutter pub get
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter build apk --release
+          cd ..
 
-            mkdir -p app/assets/background /tmp/n07/bg
-            for i in 00 01 02 03 04; do
-              curl -fsSL "$OLD/build/bg_ui1_parts/part${i}.txt" -o "/tmp/n07/bg/${i}.txt"
-            done
-            cat /tmp/n07/bg/*.txt | base64 -d > app/assets/background/n07_background_vertical.jpg
-            echo '5e850e3747117269be71f2a369549d56d2b2c6e7e4bbb98d720a1ae210f14b5c  app/assets/background/n07_background_vertical.jpg' | sha256sum -c -
+          APK=build-output/N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_DELTA.apk
+          cp app/build/app/outputs/flutter-apk/app-release.apk "$APK"
+          sha256sum "$APK" | tee build-output/apk.sha256
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BT/aapt" dump badging "$APK" | head -1 | tee build-output/package.txt
+          "$BT/apksigner" verify --print-certs "$APK" | tee build-output/signing.txt
+          NEW_CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' build-output/signing.txt | head -1 | tr 'A-F' 'a-f')"
+          OLD_CERT='f91f087706ee2b118a00ef4e12d881a9e6e3c2c1080de39e1ab537b16069beed'
+          if [ "$NEW_CERT" = "$OLD_CERT" ]; then echo 'UPGRADE_IN_PLACE=PASS' > build-output/upgrade-signing.txt; else echo "UPGRADE_IN_PLACE=FAIL_CERT_MISMATCH old=$OLD_CERT new=$NEW_CERT" > build-output/upgrade-signing.txt; fi
+          unzip -p "$APK" assets/flutter_assets/assets/background/n07_background_vertical.jpg | sha256sum | tee build-output/apk-background.sha256
+          grep '96c6b8396dcf5184a682455263d7a593433f0865f8765b1e67d209f934ad4a70' build-output/apk-background.sha256
 
-            cd app
-            flutter pub get
-            flutter analyze --no-fatal-infos --no-fatal-warnings
-            flutter build apk --release
-            cd ..
-            cp app/build/app/outputs/flutter-apk/app-release.apk build-output/N07_HUBDNI_ANDROID_16_1_1_LOCALFIRST_COMPILE_TEST.apk
-            sha256sum build-output/*.apk | tee build-output/apk.sha256
-            cp app/lib/main.dart build-output/main.dart
-            cp app/lib/local_store.dart build-output/local_store.dart
-            cp app/pubspec.yaml build-output/pubspec.yaml
-            printf '%s\n' 'COMPILE_TEST_BACKGROUND=5e850e3747117269be71f2a369549d56d2b2c6e7e4bbb98d720a1ae210f14b5c' > build-output/build-meta.txt
-          ) > build-output/build.log 2>&1
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          tail -300 build-output/build.log || true
-          exit 0
+          {
+            echo 'forcePull:true'; grep -nE 'forcePull[[:space:]]*:[[:space:]]*true' app/lib/main.dart || true
+            echo '_snapshotFromSupabase('; grep -nF '_snapshotFromSupabase(' app/lib/main.dart || true
+            echo 'legacy sinceRevision:-1'; grep -nE "sinceRevision['\"]?[[:space:]]*:[[:space:]]*-1" app/lib/main.dart || true
+            echo 'SYNC_PULL remaining'; grep -nE 'SYNC_PULL(_ALL)?' app/lib/main.dart || true
+            echo 'syncNow callsites'; grep -nF 'syncNow(' app/lib/main.dart || true
+          } > build-output/grep-proof.txt
+          cp app/lib/main.dart build-output/main.dart
+          cp app/lib/local_store.dart build-output/local_store.dart
+          cp app/pubspec.yaml build-output/pubspec.yaml
+          (cd "$ROOT/.." && zip -qr "$GITHUB_WORKSPACE/build-output/N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_SOURCE.zip" N07_HUBDNI_ANDROID_RC16_SOURCE)
 
-      - name: Commit build result
-        if: always() && github.event_name == 'push'
-        shell: bash
-        run: |
-          set -euxo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f build-output
-          git commit -m 'build: Android 16.1.1 local-first compile result [skip ci]' || true
-          git push origin HEAD:${GITHUB_REF_NAME}
-
-      - name: Upload build artifact
-        if: steps.compile.outputs.status == '0'
+      - name: Upload final artifact
         uses: actions/upload-artifact@v4
         with:
-          name: N07_HUBDNI_ANDROID_16_1_1_LOCALFIRST_COMPILE_TEST
+          name: N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_DELTA
           path: build-output
           if-no-files-found: error
-          retention-days: 3
-
-      - name: Fail if compile failed
-        if: steps.compile.outputs.status != '0'
-        run: exit 1
+          retention-days: 7
