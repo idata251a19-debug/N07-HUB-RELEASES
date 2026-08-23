@@ -1,0 +1,471 @@
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -274,8 +274,23 @@
+         colorScheme: ColorScheme.fromSeed(
+           seedColor: const Color(0xffb71c1c),
+         ),
+-        scaffoldBackgroundColor: const Color(0xfff5f6f8),
+-        appBarTheme: const AppBarTheme(centerTitle: false),
++        scaffoldBackgroundColor: Colors.transparent,
++        appBarTheme: const AppBarTheme(
++          centerTitle: false,
++          backgroundColor: Color(0xeef5f6f8),
++        ),
++      ),
++      builder: (context, child) => Stack(
++        fit: StackFit.expand,
++        children: [
++          Image.asset(
++            'assets/background/n07_background_vertical.jpg',
++            fit: BoxFit.cover,
++            alignment: Alignment.center,
++          ),
++          const ColoredBox(color: Color(0x9effffff)),
++          if (child != null) child,
++        ],
+       ),
+       home: _loading
+           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+@@ -617,6 +632,31 @@
+     };
+   }
+ 
++  String _serverDateTime(dynamic value) {
++    final raw = '${value ?? ''}'.trim();
++    if (raw.isEmpty) return DateTime.now().toIso8601String();
++
++    final direct = DateTime.tryParse(raw);
++    if (direct != null) return direct.toIso8601String();
++
++    final match = RegExp(
++      r'^(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$',
++    ).firstMatch(raw);
++    if (match != null) {
++      final day = int.parse(match.group(1)!);
++      final month = int.parse(match.group(2)!);
++      final year = int.parse(match.group(3)!);
++      final hour = int.tryParse(match.group(4) ?? '') ?? 0;
++      final minute = int.tryParse(match.group(5) ?? '') ?? 0;
++      final second = int.tryParse(match.group(6) ?? '') ?? 0;
++      return DateTime(year, month, day, hour, minute, second)
++          .toIso8601String();
++    }
++
++    // Không gửi chuỗi dd/MM/yyyy thô vào Supabase timestamptz.
++    return DateTime.now().toIso8601String();
++  }
++
+   Future<Map<String, dynamic>> _directMutation(
+     String action,
+     Map<String, dynamic> extra,
+@@ -699,7 +739,7 @@
+         'pinCode': '${extra['code'] ?? ''}',
+         'slotId': remoteSlot,
+         'pinType': '${extra['pinType'] ?? ''}',
+-        'scannedAt': extra['clientTime'],
++        'scannedAt': _serverDateTime(extra['clientTime']),
+       });
+     } else if (action == 'exportPin') {
+       response = await _apiAction('APPLY_OPERATION', extra: {
+@@ -708,7 +748,7 @@
+         'pinCode': '${extra['code'] ?? ''}',
+         'slotId': remoteSlot,
+         'pinType': '${extra['pinType'] ?? ''}',
+-        'scannedAt': extra['clientTime'],
++        'scannedAt': _serverDateTime(extra['clientTime']),
+       });
+     } else if (action == 'replacePin') {
+       final search = await _apiAction('SEARCH_PIN', extra: {'query': '${extra['expectedOldCode'] ?? ''}', 'exact': true});
+@@ -738,7 +778,7 @@
+           'wrongLocation': extra['wrongLocation'],
+           'unknown': extra['unknown'],
+           'duplicateScans': extra['duplicateScans'],
+-          'clientTime': extra['clientTime'],
++          'clientTime': _serverDateTime(extra['clientTime']),
+         },
+       });
+     } else {
+@@ -760,9 +800,8 @@
+   }
+ 
+   Future<Map<String, dynamic>> _call(
+-    String action, [
+-    Map<String, dynamic> extra = const {},
+-  ], {
++    String action,
++    Map<String, dynamic> extra, {
+     bool auth = false,
+   }) async {
+     final a = action.trim();
+@@ -843,6 +882,15 @@
+       for (final raw in ops.whereType<Map>()) {
+         final op = Map<String, dynamic>.from(raw);
+         final payload = Map<String, dynamic>.from(op['payload'] as Map? ?? const {});
++        // Hàng chờ cũ có thể còn clientTime dạng dd/MM/yyyy HH:mm:ss.
++        // Chuẩn hóa ngay tại cửa syncBatch để tuyệt đối không gửi chuỗi locale
++        // vào cột timestamptz của Supabase, kể cả thao tác được tạo bởi bản APK cũ.
++        if (payload.containsKey('clientTime')) {
++          payload['clientTime'] = _serverDateTime(payload['clientTime']);
++        }
++        if (payload.containsKey('scannedAt')) {
++          payload['scannedAt'] = _serverDateTime(payload['scannedAt']);
++        }
+         final opAction = '${op['action'] ?? ''}' == 'importPinAtSlot' ? 'importPin' : '${op['action'] ?? ''}';
+         final result = await _directMutation(opAction, payload);
+         results.add({...result, 'opId': '${op['opId'] ?? ''}', 'action': '${op['action'] ?? ''}'});
+@@ -859,7 +907,7 @@
+     throw ApiException('Action không hỗ trợ trên APK: $a', code: 'unsupported_action');
+   }
+ 
+-  Future<Map<String, dynamic>> pingInfo() async => _call('ping');
++  Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});
+ 
+   Future<void> ping() async {
+     final data = await pingInfo();
+@@ -873,7 +921,7 @@
+   }
+ 
+   Future<String> revision() async {
+-    final data = await _call('revision');
++    final data = await _call('revision', const {});
+     return '${data['revision'] ?? ''}';
+   }
+ 
+@@ -928,7 +976,7 @@
+     _syncingNow = true;
+     await _local.refreshSyncState(online: true, syncing: true, authError: '', message: 'Đang đồng bộ Supabase...');
+     try {
+-      final data = await _call('syncSnapshot');
++      final data = await _call('syncSnapshot', const {});
+       if (!_warehouseStillActive) return;
+       final snapshot = data['snapshot'];
+       if (snapshot is Map) await _local.applySnapshot(Map<String, dynamic>.from(snapshot));
+@@ -1032,7 +1080,20 @@
+     try {
+       for (var start = 0; start < ops.length; start += 10) {
+         final end = min(start + 10, ops.length);
+-        final batch = ops.sublist(start, end);
++        final batch = ops.sublist(start, end).map((op) {
++          final safe = Map<String, dynamic>.from(op);
++          final payload = Map<String, dynamic>.from(
++            safe['payload'] as Map? ?? const {},
++          );
++          if (payload.containsKey('clientTime')) {
++            payload['clientTime'] = _serverDateTime(payload['clientTime']);
++          }
++          if (payload.containsKey('scannedAt')) {
++            payload['scannedAt'] = _serverDateTime(payload['scannedAt']);
++          }
++          safe['payload'] = payload;
++          return safe;
++        }).toList();
+ 
+         Map<String, dynamic> data;
+         try {
+@@ -1250,27 +1311,71 @@
+     return LocationDetail.fromJson(data, warehouseId: warehouseId);
+   }
+ 
++  bool get _fastMutationOnline =>
++      configured &&
++      sessionToken.isNotEmpty &&
++      _warehouseStillActive &&
++      _local.syncState.value.online;
++
++  ScanOutcome _localMutationOutcome(
++    Map<String, dynamic> data, {
++    required String successPrefix,
++    required bool cellMode,
++  }) {
++    final ok = data['ok'] == true;
++    final location = '${data['location'] ?? ''}';
++    final slot = _asInt(data['slot']);
++    final message = '${data['message'] ?? ''}'.trim();
++    if (ok) {
++      final position = location.isNotEmpty && slot > 0
++          ? _rackPositionLabel(location, slot, warehouseId: warehouseId)
++          : '';
++      return ScanOutcome.success(
++        position.isEmpty
++            ? '$successPrefix • CHỜ XÁC NHẬN'
++            : '$successPrefix • $position • CHỜ XÁC NHẬN',
++        location: location,
++        slot: slot,
++        full: cellMode ? data['cellFull'] == true : data['full'] == true,
++      );
++    }
++
++    final code = '${data['code'] ?? ''}'.toLowerCase();
++    final text = message.isEmpty ? 'Thao tác không thực hiện được.' : message;
++    if (code == 'duplicate') {
++      return ScanOutcome.duplicate(text, location: location, slot: slot);
++    }
++    if (code == 'full' || code == 'cell_full') {
++      return ScanOutcome.full(text);
++    }
++    return ScanOutcome.error(text);
++  }
++
+   Future<ScanOutcome> importPin(
+     String location,
+     String code, {
+     int? exactSlot,
+     String pinType = '',
+   }) async {
+-    final data = await _call('importPin', {
+-      'location': location,
+-      'code': code.trim(),
+-      if (exactSlot != null) 'exactSlot': exactSlot,
+-      'pinType': pinType,
+-      'clientTime': DateTime.now().toIso8601String(),
+-    });
+-    final slot = _asInt(data['slot']);
+-    await _local.applyConfirmedImport(
+-      code: code.trim(), location: '${data['location'] ?? location}', slot: slot,
+-      pinType: '${data['pinType'] ?? pinType}', deviceId: deviceId, operatorId: operatorId,
++    if (!_fastMutationOnline) {
++      return ScanOutcome.error(
++        'MẤT KẾT NỐI • Không nhận mã mới khi chưa online.',
++      );
++    }
++
++    final data = await _local.importPin(
++      location: location,
++      code: code.trim(),
++      deviceId: deviceId,
++      operatorId: operatorId,
++      sessionToken: sessionToken,
++      pinType: pinType,
++      exactSlot: exactSlot,
+     );
+-    return ScanOutcome.success(
+-      'Đã nhập • ${_rackPositionLabel('${data['location'] ?? location}', slot, warehouseId: warehouseId)}',
+-      location: '${data['location'] ?? location}', slot: slot, full: data['full'] == true,
++    return _localMutationOutcome(
++      data,
++      successPrefix: 'ĐÃ NHẬN TRÊN MÁY',
++      cellMode: false,
+     );
+   }
+ 
+@@ -1282,19 +1387,27 @@
+     String code, {
+     String pinType = '',
+   }) async {
+-    final data = await _call('importPinToCell', {
+-      'location': location, 'aisle': aisle, 'row': row, 'cell': cell,
+-      'code': code.trim(), 'pinType': pinType,
+-      'clientTime': DateTime.now().toIso8601String(),
+-    });
+-    final slot = _asInt(data['slot']);
+-    await _local.applyConfirmedImport(
+-      code: code.trim(), location: '${data['location'] ?? location}', slot: slot,
+-      pinType: '${data['pinType'] ?? pinType}', deviceId: deviceId, operatorId: operatorId,
++    if (!_fastMutationOnline) {
++      return ScanOutcome.error(
++        'MẤT KẾT NỐI • Không nhận mã mới khi chưa online.',
++      );
++    }
++
++    final data = await _local.importPinToCell(
++      location: location,
++      aisle: aisle,
++      row: row,
++      cell: cell,
++      code: code.trim(),
++      deviceId: deviceId,
++      operatorId: operatorId,
++      sessionToken: sessionToken,
++      pinType: pinType,
+     );
+-    return ScanOutcome.success(
+-      'Đã nhập • ${_rackPositionLabel('${data['location'] ?? location}', slot, warehouseId: warehouseId)}',
+-      location: '${data['location'] ?? location}', slot: slot, full: data['cellFull'] == true,
++    return _localMutationOutcome(
++      data,
++      successPrefix: 'ĐÃ NHẬN TRÊN MÁY',
++      cellMode: true,
+     );
+   }
+ 
+@@ -1346,23 +1459,22 @@
+   Future<List<String>> listPinTypes() => _local.listPinTypes();
+ 
+   Future<ScanOutcome> exportPin(String code) async {
+-    final local = await _local.searchPin(code.trim());
+-    final data = await _call('exportPin', {
+-      'code': code.trim(),
+-      'expectedLocation': '${local['location'] ?? ''}',
+-      'expectedSlot': _asInt(local['slot']),
+-      'pinType': '${local['pinType'] ?? ''}',
+-      'clientTime': DateTime.now().toIso8601String(),
+-    });
+-    final location = '${data['location'] ?? local['location'] ?? ''}';
+-    final slot = _asInt(data['slot']);
+-    await _local.applyConfirmedExport(
+-      code: code.trim(), location: location, slot: slot,
+-      pinType: '${data['pinType'] ?? local['pinType'] ?? ''}', deviceId: deviceId, operatorId: operatorId,
++    if (!_fastMutationOnline) {
++      return ScanOutcome.error(
++        'MẤT KẾT NỐI • Không xuất PIN khi chưa online.',
++      );
++    }
++
++    final data = await _local.exportPin(
++      code: code.trim(),
++      deviceId: deviceId,
++      operatorId: operatorId,
++      sessionToken: sessionToken,
+     );
+-    return ScanOutcome.success(
+-      'Đã xuất • ${_rackPositionLabel(location, slot, warehouseId: warehouseId)}',
+-      location: location, slot: slot,
++    return _localMutationOutcome(
++      data,
++      successPrefix: 'ĐÃ XUẤT TRÊN MÁY',
++      cellMode: false,
+     );
+   }
+ 
+@@ -4584,6 +4696,27 @@
+   List<String> _pendingCellOpIds = const [];
+   int? _preferredEmptySlot;
+   int? _revealedDeleteSlot;
++  final Map<int, GlobalKey> _slotKeys = <int, GlobalKey>{};
++
++  GlobalKey _slotKey(int slot) =>
++      _slotKeys.putIfAbsent(slot, () => GlobalKey());
++
++  void _scrollToSlot(int slot) {
++    WidgetsBinding.instance.addPostFrameCallback((_) {
++      if (!mounted) return;
++      final targetContext = _slotKeys[slot]?.currentContext;
++      if (targetContext == null) return;
++      // Mã vừa bắn phải nằm gần đầu viewport để người vận hành nhìn thấy
++      // ngay và tiếp tục bắn theo luồng từ trên xuống. Không kéo mã mới
++      // xuống gần đáy màn hình như các bản 16.0.3/16.0.4.
++      Scrollable.ensureVisible(
++        targetContext,
++        duration: const Duration(milliseconds: 160),
++        curve: Curves.easeOut,
++        alignment: 0.08,
++      );
++    });
++  }
+ 
+   @override
+   void initState() {
+@@ -5018,6 +5151,7 @@
+           );
+         });
+ 
++        _scrollToSlot(outcome.slot!);
+         unawaited(_refresh());
+       }
+     }
+@@ -5531,6 +5665,7 @@
+ 
+                     if (empty) {
+                       return ClipRRect(
++                        key: _slotKey(slot.slot),
+                         borderRadius: BorderRadius.circular(8),
+                         child: SizedBox(
+                           height: slotRowHeight,
+@@ -5549,6 +5684,7 @@
+                     }
+ 
+                     return ClipRRect(
++                      key: _slotKey(slot.slot),
+                       borderRadius: BorderRadius.circular(8),
+                       child: SizedBox(
+                         height: slotRowHeight,
+@@ -6061,17 +6197,49 @@
+               style: TextStyle(fontWeight: FontWeight.w900),
+             ),
+             const SizedBox(height: 5),
+-            ..._recent.map(
+-              (e) => Padding(
+-                padding: const EdgeInsets.symmetric(vertical: 2),
+-                child: Text(
+-                  e,
+-                  maxLines: 2,
+-                  overflow: TextOverflow.ellipsis,
+-                  style: const TextStyle(fontSize: 11.5),
++            ..._recent.map((e) {
++              final ok = e.startsWith('✓');
++              final text = e.length > 2 ? e.substring(2) : e;
++              final tone = ok ? Colors.green : Colors.red;
++              return Container(
++                margin: const EdgeInsets.only(bottom: 5),
++                padding: const EdgeInsets.symmetric(
++                  horizontal: 10,
++                  vertical: 8,
+                 ),
+-              ),
+-            ),
++                decoration: BoxDecoration(
++                  color: tone.withValues(alpha: 0.08),
++                  borderRadius: BorderRadius.circular(9),
++                  border: Border.all(
++                    color: tone.withValues(alpha: 0.25),
++                  ),
++                ),
++                child: Row(
++                  crossAxisAlignment: CrossAxisAlignment.start,
++                  children: [
++                    Icon(
++                      ok ? Icons.check_circle : Icons.error,
++                      size: 18,
++                      color: ok
++                          ? Colors.green.shade800
++                          : Colors.red.shade700,
++                    ),
++                    const SizedBox(width: 7),
++                    Expanded(
++                      child: Text(
++                        text,
++                        maxLines: 3,
++                        overflow: TextOverflow.ellipsis,
++                        style: const TextStyle(
++                          fontSize: 12,
++                          fontWeight: FontWeight.w700,
++                        ),
++                      ),
++                    ),
++                  ],
++                ),
++              );
++            }),
+           ],
+         ],
+       ),
+@@ -7362,7 +7530,7 @@
+         builder: (_) => AlertDialog(
+           title: const Text('ĐỔI DÃY KIỂM KÊ?'),
+           content: const Text(
+-            'Danh sách quét hiện tại sẽ được xóa. Hãy LƯU KIỂM KÊ trước nếu cần.',
++            'Danh sách quét hiện tại sẽ được xóa.',
+           ),
+           actions: [
+             TextButton(
+@@ -7568,10 +7736,6 @@
+ 
+   @override
+   Widget build(BuildContext context) {
+-    final matched = _matchedItems.length;
+-    final wrong = _wrongLocationItems.length;
+-    final unknown = _unknownItems.length;
+-    final missing = _missingCodes.length;
+     return Scaffold(
+       appBar: AppBar(
+         title: const Text('KIỂM KÊ'),
+@@ -7676,20 +7840,7 @@
+               ],
+             ),
+           ),
+-          Padding(
+-            padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+-            child: Wrap(
+-              spacing: 6,
+-              runSpacing: 6,
+-              children: [
