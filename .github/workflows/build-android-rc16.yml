@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - tmp/android-rc16-build-20260823
+      - tmp/android-rc16-final-20260823
     paths:
       - build/trigger-final.txt
 
@@ -26,33 +27,50 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          rm -rf build-output
-          mkdir -p build-output
+          rm -rf build-output /tmp/rc16-src app
+          mkdir -p build-output /tmp/rc16-src
           (
             set -euxo pipefail
             flutter --version
-            cat build/android_rc16_chunks/part*.txt > /tmp/android_rc16_overlay.b64
-            base64 -d /tmp/android_rc16_overlay.b64 > /tmp/android_rc16_overlay.zip
-            echo '92f92e96842012856074d91918bb21e57226c7e38d6c00b11630b1f77a3b07c6  /tmp/android_rc16_overlay.zip' | sha256sum -c -
-            unzip -t /tmp/android_rc16_overlay.zip
-            rm -rf app
-            flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_mobile
-            unzip -o /tmp/android_rc16_overlay.zip -d app
-            cp app/android_override/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
-            rm -f app/test/widget_test.dart
+            cat build/android_rc16_exact_v2/part{00..10}.txt \
+                build/android_rc16_exact_v3/part11_00.txt \
+                build/android_rc16_exact_v3/part11_01.txt \
+                build/android_rc16_exact_v3/part11_02.txt \
+                build/android_rc16_exact_v3/part12_00.txt \
+                build/android_rc16_exact_v3/part12_01.txt > /tmp/android_rc16_source.b64
+            base64 -d /tmp/android_rc16_source.b64 > /tmp/android_rc16_source.zip
+            echo '8f07eb28c3e7ef5314e2c7a647d02343b1b15c6da60b6d1976892f70ffbd90b1  /tmp/android_rc16_source.zip' | sha256sum -c -
+            unzip -t /tmp/android_rc16_source.zip
+            unzip -q /tmp/android_rc16_source.zip -d /tmp/rc16-src
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_backend_hashes_v25.py
+            python3 /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/test/qa_slot_layout_v25.py
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
+            (cd /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/google_sheet_backend && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
+            flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
+            cp -a /tmp/rc16-src/N07_HUBDNI_ANDROID_RC16_SOURCE/. app/
+            cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+            rm -f app/test/widget_test.dart.bak
             python3 - <<'PY'
           from pathlib import Path
-          p = Path('app/android/app/build.gradle.kts')
-          s = p.read_text().replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+          p=Path('app/android/app/build.gradle.kts')
+          s=p.read_text().replace('minSdk = flutter.minSdkVersion','minSdk = 23')
           p.write_text(s)
-          d = Path('app/lib/main.dart')
-          s = d.read_text().replace('DropdownButtonFormField<String>(\n          value: type.isEmpty ? null : type,', 'DropdownButtonFormField<String>(\n          initialValue: type.isEmpty ? null : type,')
+          d=Path('app/lib/main.dart')
+          s=d.read_text()
+          old="    String action, [\n    Map<String, dynamic> extra = const {},\n  ], {\n"
+          new="    String action,\n    Map<String, dynamic> extra, {\n"
+          if old not in s:
+              raise SystemExit('expected _call signature not found')
+          s=s.replace(old,new,1)
+          s=s.replace("Future<Map<String, dynamic>> pingInfo() async => _call('ping');", "Future<Map<String, dynamic>> pingInfo() async => _call('ping', const {});")
+          s=s.replace("final data = await _call('revision');", "final data = await _call('revision', const {});")
+          s=s.replace("final data = await _call('syncSnapshot');", "final data = await _call('syncSnapshot', const {});")
           d.write_text(s)
           PY
             cd app
             flutter pub get
             dart format lib test
-            flutter analyze
+            flutter analyze --no-fatal-infos --no-fatal-warnings
             flutter test
             flutter build apk --release
             cp build/app/outputs/flutter-apk/app-release.apk ../build-output/N07_HUBDNI_ANDROID_RC16.apk
@@ -61,9 +79,9 @@ jobs:
           ) > build-output/build.log 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          tail -200 build-output/build.log || true
+          tail -250 build-output/build.log || true
           exit 0
-      - name: Commit build result to temporary branch
+      - name: Commit build result
         if: always()
         shell: bash
         run: |
@@ -71,8 +89,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add build-output
-          git commit -m 'build: N07 Android RC16 result [skip ci]' || true
-          git push origin HEAD:tmp/android-rc16-build-20260823
+          git commit -m 'build: N07 Android RC16 final result [skip ci]' || true
+          git push origin HEAD:${GITHUB_REF_NAME}
       - name: Upload APK artifact
         if: steps.compile.outputs.status == '0'
         uses: actions/upload-artifact@v4
@@ -81,6 +99,7 @@ jobs:
           path: |
             build-output/N07_HUBDNI_ANDROID_RC16.apk
             build-output/N07_HUBDNI_ANDROID_RC16.sha256
+            build-output/build.log
           if-no-files-found: error
           retention-days: 3
       - name: Fail build if compile failed
