@@ -71,7 +71,14 @@ patching file lib/main.dart
 + patch -p0
 patching file lib/local_store.dart
 + python3 -
-+ echo 'dbd77f4b225c05724c91867e7d937f55e0848d53afd10536171404f73fbdc01e  build/android_16_1_1_localfirst/final_hardening.patch'
 + sha256sum -c -
-build/android_16_1_1_localfirst/final_hardening.patch: FAILED
-sha256sum: WARNING: 1 computed checksum did NOT match
++ echo '971637a72c513d09b5b091c3de9fb3b8bd99e5fecc3ef546ca869b1d9ba97277  build/android_16_1_1_localfirst/final_hardening.patch'
+build/android_16_1_1_localfirst/final_hardening.patch: OK
++ cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p0
+patching file lib/main.dart
+patching file lib/local_store.dart
++ python3 -
+Traceback (most recent call last):
+  File "<stdin>", line 7, in <module>
+AssertionError
