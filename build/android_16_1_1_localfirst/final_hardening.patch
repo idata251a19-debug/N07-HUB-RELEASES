@@ -126,3 +126,12 @@
    Future<List<Map<String, dynamic>>> pendingOps({int limit = 8}) async {
      final database = await db;
      final rows = await database.query(
+@@ -2498,7 +2517,7 @@
+     final iso = DateTime.tryParse(clean);
+     if (iso != null) return iso.millisecondsSinceEpoch;
+     final match = RegExp(
+-      r'^(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?)?$',
++      r'^(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$',
+     ).firstMatch(clean);
+     if (match == null) return 0;
+     try {
