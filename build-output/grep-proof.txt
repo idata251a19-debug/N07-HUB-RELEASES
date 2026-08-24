@@ -1,0 +1,35 @@
+forcePull:true
+_snapshotFromSupabase(
+legacy sinceRevision:-1
+SYNC_PULL remaining
+510:    }, timeout: action == 'SYNC_PULL' ? const Duration(seconds: 30) : const Duration(seconds: 15));
+535:        'action': 'SYNC_PULL_ALL',
+767:      final data = await _apiAction('SYNC_PULL', extra: const {'sinceRevision': 9007199254740991});
+967:      // SYNC_PULL -1 trong normal runtime.
+syncNow callsites
+901:    await onlineApi.syncNow(bypassThrottle: true, reason: 'login_bootstrap');
+914:  Future<void> syncNow({
+1500:        await syncNow(
+1551:    if (force) unawaited(syncNow(bypassThrottle: true, reason: 'locations_refresh'));
+1567:    await syncNow(
+1572:    await syncNow(
+2782:    await api.syncNow(reason: 'retry');
+2806:        await api.syncNow(bypassThrottle: true, reason: 'revision_change');
+2881:        await targetApi.syncNow(bypassThrottle: true, reason: 'warehouse_first_open');
+2934:      await targetApi.syncNow(bypassThrottle: true, reason: 'warehouse_switch');
+3014:      unawaited(api.syncNow(bypassThrottle: true, reason: 'resume'));
+3036:      if (!skipSync) unawaited(api.syncNow());
+3277:                onRetry: () => api.syncNow(bypassThrottle: true, reason: 'manual'),
+4012:                onRetry: () => widget.api.syncNow(bypassThrottle: true, reason: 'manual'),
+4689:      await widget.api.syncNow(bypassThrottle: true, reason: 'manual');
+6410:              onRetry: () => widget.api.syncNow(bypassThrottle: true, reason: 'manual'),
+retry guard
+2775:    if (!mounted || !_appActive || _sessionExpired || _switchingWarehouse) return;
+post upload
+app/lib/main.dart:1354:          await _local.markTransferAttemptsFailed(
+app/lib/main.dart:1363:          await _local.markTransferAttemptsFailed(
+app/lib/main.dart:1417:          await _local.markTransferAttemptsFailed(
+app/lib/main.dart:1471:      await _local.markTransferAttemptsFailed(
+app/lib/main.dart:1502:          reason: 'post_upload',
+app/lib/main.dart:2961:        onlyUnattempted: true,
+app/lib/local_store.dart:2331:  Future<void> markTransferAttemptsFailed(

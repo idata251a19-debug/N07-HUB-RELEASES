@@ -1,0 +1,137 @@
+--- lib/main.dart
++++ lib/main.dart
+@@ -915,6 +915,7 @@
+     bool bypassThrottle = false,
+     bool recoverLayout = false,
+     String reason = 'normal',
++    int uploadedRows = 0,
+   }) async {
+     if (_syncingNow || sessionToken.isEmpty || !_warehouseStillActive) return;
+     final now = DateTime.now();
+@@ -1205,7 +1206,7 @@
+           reason: reason,
+           syncMode: syncMode,
+           rowsDownloaded: rowsDownloaded,
+-          rowsUploaded: 0,
++          rowsUploaded: uploadedRows,
+           revisionBefore: revisionBefore,
+           revisionAfter: revisionAfter,
+           fullBootstrap: fullBootstrap,
+@@ -1350,11 +1351,19 @@
+           errors.add(
+             '[$fatalCode] $fatalMessage',
+           );
++          await _local.markTransferAttemptsFailed(
++            batch.map((op) => '${op['opId']}'),
++            '[$fatalCode] $fatalMessage',
++          );
+           break;
+         } catch (e) {
+           fatalCode = 'unknown';
+           fatalMessage = '$e';
+           errors.add('[$fatalCode] $fatalMessage');
++          await _local.markTransferAttemptsFailed(
++            batch.map((op) => '${op['opId']}'),
++            '[$fatalCode] $fatalMessage',
++          );
+           break;
+         }
+ 
+@@ -1393,15 +1402,23 @@
+ 
+         // Missing server result is treated as failed, but the outbox row
+         // stays untouched so the user can retry safely.
++        final missingResultIds = <String>[];
+         for (final op in batch) {
+           final opId = '${op['opId']}';
+           if (!returnedIds.contains(opId)) {
+             failed++;
++            missingResultIds.add(opId);
+             errors.add(
+               '$opId • Server không trả kết quả, thao tác vẫn được giữ để thử lại.',
+             );
+           }
+         }
++        if (missingResultIds.isNotEmpty) {
++          await _local.markTransferAttemptsFailed(
++            missingResultIds,
++            'Server không trả kết quả; giữ thao tác để manual retry.',
++          );
++        }
+ 
+         processed = end;
+         onProgress?.call(processed, ops.length);
+@@ -1451,6 +1468,10 @@
+       fatalCode = 'client_upload_error';
+       fatalMessage = '$e';
+       errors.add('[$fatalCode] $fatalMessage');
++      await _local.markTransferAttemptsFailed(
++        ops.skip(processed).map((op) => '${op['opId']}'),
++        '[$fatalCode] $fatalMessage',
++      );
+ 
+       await _local.refreshSyncState(
+         syncing: false,
+@@ -1475,6 +1496,13 @@
+         syncing: false,
+         authError: '',
+       );
++      if (uploaded > 0 && _warehouseStillActive) {
++        await syncNow(
++          bypassThrottle: true,
++          reason: 'post_upload',
++          uploadedRows: uploaded,
++        );
++      }
+     }
+   }
+ 
+@@ -2945,8 +2973,9 @@
+         await _refresh(silent: true);
+       }
+     } catch (_) {
+-      // Automatic upload is best-effort.
+-      // Queue rows remain local and will be retried on the next poll/resume.
++      // Automatic upload is best-effort. Failed selected rows are marked with
++      // attempts>0 by uploadPendingTransfers, so the 5s local poll cannot
++      // become a 5s network retry loop. Manual retry remains available.
+     } finally {
+       _autoUploadCheckRunning = false;
+     }
+--- lib/local_store.dart
++++ lib/local_store.dart
+@@ -2328,6 +2328,25 @@
+     );
+   }
+ 
++  Future<void> markTransferAttemptsFailed(
++    Iterable<String> opIds,
++    String message,
++  ) async {
++    final ids = opIds
++        .map((e) => e.trim())
++        .where((e) => e.isNotEmpty)
++        .toSet()
++        .toList(growable: false);
++    if (ids.isEmpty) return;
++    final database = await db;
++    final placeholders = List.filled(ids.length, '?').join(',');
++    await database.rawUpdate(
++      'UPDATE outbox SET attempts=attempts+1, last_error=? '
++      'WHERE op_id IN ($placeholders)',
++      [message, ...ids],
++    );
++  }
++
+   Future<List<Map<String, dynamic>>> pendingOps({int limit = 8}) async {
+     final database = await db;
+     final rows = await database.query(
+@@ -2498,7 +2517,7 @@
+     final iso = DateTime.tryParse(clean);
+     if (iso != null) return iso.millisecondsSinceEpoch;
+     final match = RegExp(
+-      r'^(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?)?$',
++      r'^(\d{1,2})/(\d{1,2})/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$',
+     ).firstMatch(clean);
+     if (match == null) return 0;
+     try {
