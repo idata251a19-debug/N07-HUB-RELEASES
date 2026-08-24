@@ -1,8 +1,3 @@
-+ flutter --version
-Flutter 3.47.1 • channel stable • https://github.com/flutter/flutter.git
-Framework • revision 6655482ec0 (4 days ago) • 2026-08-19 10:07:23 -0700
-Engine • hash 11d79658c444477b06513d32b52c8c4ccb7276b0 (revision 5d53178869) (4 days ago) • 2026-08-18 23:36:01.000Z
-Tools • Dart 3.13.1 • DevTools 2.60.0
 + OLD=https://raw.githubusercontent.com/idata251a19-debug/N07-HUB-RELEASES/tmp/android-16-0-5-idata-build-20260823
 ++ seq -w 0 10
 + for i in $(seq -w 0 10)
@@ -70,15 +65,13 @@ patching file pubspec.yaml
 + base64 -d build/android_16_1_1_localfirst/local_patch.gz.b64
 + gzip -d
 + cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
-+ patch -p1
-can't find file to patch at input line 3
-Perhaps you used the wrong -p or --strip option?
-The text leading up to this was:
---------------------------
-|--- lib/main.dart.baseline_16_0_6	2026-08-23 14:06:59.712384891 +0000
-|+++ lib/main.dart	2026-08-23 14:57:45.486541312 +0000
---------------------------
-File to patch: 
-Skip this patch? [y] 
-Skipping patch.
-34 out of 34 hunks ignored
++ patch -p0
+patching file lib/main.dart
++ cd /tmp/n07/base/N07_HUBDNI_ANDROID_RC16_SOURCE
++ patch -p0
+patching file lib/local_store.dart
++ python3 -
++ echo 'dbd77f4b225c05724c91867e7d937f55e0848d53afd10536171404f73fbdc01e  build/android_16_1_1_localfirst/final_hardening.patch'
++ sha256sum -c -
+build/android_16_1_1_localfirst/final_hardening.patch: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
