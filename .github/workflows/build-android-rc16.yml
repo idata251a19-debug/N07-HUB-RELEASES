@@ -1,48 +1,20 @@
-name: Build Android 16.1.1 Final Hardened
+name: Revoke temporary N07 CI session
 
 on:
   push:
     branches: [tmp/android-16-1-1-localfirst-build-20260823]
-  pull_request:
-    branches: [main]
-
-permissions:
-  contents: write
 
 jobs:
-  build:
+  revoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-      - name: Final hardened build and regression
-        id: final
+      - name: Logout temporary session
         shell: bash
         run: |
-          echo '19d2a13e04481ede40f02b26d59631449827b153f4eae4a1a452a1be3cc625a5  build/android_16_1_1_localfirst/final_ci.sh.gz.b64' | sha256sum -c -
-          base64 -d build/android_16_1_1_localfirst/final_ci.sh.gz.b64 | gzip -d > /tmp/final_ci.sh
-          echo 'c848a42c056b2d7d94eeaad5050ea1d7c84a0130db4ba022e8257d80d4babae6  /tmp/final_ci.sh' | sha256sum -c -
-          bash /tmp/final_ci.sh > build-final.log 2>&1
-          tail -300 build-final.log
-      - name: Persist proof
-        if: always() && github.event_name == 'push'
-        shell: bash
-        run: |
-          cp build-final.log build-output/build-final.log 2>/dev/null || true
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f build-output build-final.log
-          git commit -m 'build: Android 16.1.1 HARDENED FINAL result [skip ci]' || true
-          git push origin HEAD:${GITHUB_REF_NAME}
-      - name: Upload final artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_DELTA_FINAL
-          path: build-output
-          if-no-files-found: error
-          retention-days: 7
+          set -euo pipefail
+          RESP=$(curl -fsS 'https://adixviiotaldvxcgshyt.supabase.co/functions/v1/n07-api-v4' \
+            -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYXNlIiwicmVmIjoiYWRpeHZpaW90YWxkdnhjZ3NoeXQiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NzIyMjI0MSwiZXhwIjoyMTAyNzk4MjQxfQ.1rKqUezdnRDCglDISDNvic9rkmUkDe_veuiJspR-AWk' \
+            -H 'content-type: application/json' \
+            --data-binary '{"action":"LOGOUT","sessionToken":"N07-CI-1611-gpOSBmSqx18UcOmVLXYH2KaAn_jdaK9f","deviceId":"CI-N07-1611-24aa7acf79ca","warehouseId":"VF_E2W"}')
+          printf '%s\n' "$RESP"
+          echo "$RESP" | grep -q '"ok":true'
