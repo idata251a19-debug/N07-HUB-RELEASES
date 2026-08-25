@@ -1,0 +1,26 @@
+name: Export apksigner tool
+on:
+  push:
+    branches: [tmp/export-apksigner-20260825]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect apksigner
+        shell: bash
+        run: |
+          set -euxo pipefail
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          mkdir -p tool/lib
+          cp "$BT/apksigner" tool/apksigner
+          cp "$BT/lib/apksigner.jar" tool/lib/apksigner.jar
+          printf '%s\n' "$BT" > tool/BUILD_TOOLS_PATH.txt
+          sha256sum tool/apksigner tool/lib/apksigner.jar > tool/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apksigner-tool
+          path: tool
+          if-no-files-found: error
+          retention-days: 1
