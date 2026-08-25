@@ -1,0 +1,1 @@
+package: name='vn.hubdni.n07_hub_v1' versionCode='51' versionName='16.1.1' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'

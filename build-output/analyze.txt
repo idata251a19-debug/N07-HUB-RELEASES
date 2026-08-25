@@ -1,0 +1,16 @@
+Analyzing app...                                                
+
+   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/main.dart:23:33 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/main.dart:24:37 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation. Try removing the braces • lib/main.dart:25:34 • unnecessary_brace_in_string_interps
+   info • Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' • lib/main.dart:296:11 • use_null_aware_elements
+warning • The value of the field '_lastSyncAttemptAt' isn't used. Try removing the field, or using it • lib/main.dart:359:38 • unused_field
+warning • The value of the local variable 'data' isn't used. Try removing the variable or using it • lib/main.dart:1703:11 • unused_local_variable
+warning • The value of the field '_lastRevision' isn't used. Try removing the field, or using it • lib/main.dart:2729:10 • unused_field
+warning • The value of the field '_saved' isn't used. Try removing the field, or using it • lib/main.dart:7712:8 • unused_field
+warning • The declaration '_saveAudit' isn't referenced. Try removing the declaration of '_saveAudit' • lib/main.dart:7864:16 • unused_element
+warning • Returning a 'Future' without 'await' inside a try block. Try adding an 'await' • lib/main.dart:9280:9 • unawaited_return_in_try_block
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9674:14 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:9678:14 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check • lib/main.dart:10040:14 • use_build_context_synchronously
+

@@ -1,0 +1,27 @@
+name: n07_hub_v1
+description: N07 HUBDNI Android - field operations synchronized with N07 HUBDNI PC.
+publish_to: 'none'
+version: 16.1.1+51
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/background/n07_background_vertical.jpg
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mobile_scanner: ^7.4.0
+  http: ^1.2.2
+  shared_preferences: ^2.5.5
+  image_picker: ^1.2.1
+  sqflite: ^2.4.2
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

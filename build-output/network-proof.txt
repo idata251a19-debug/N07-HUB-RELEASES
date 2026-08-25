@@ -1,0 +1,2 @@
+DELTA bytes=874 slots=0 history=1 inventoryDelta=1 removed=0 fullInventory=0
+LEGACY bytes=1657 slots=0 history=1 inventory=5 stateIncluded=true

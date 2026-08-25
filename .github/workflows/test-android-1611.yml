@@ -1,0 +1,46 @@
+name: Test Android 16.1.1 Authoritative
+on:
+  push:
+    branches: [tmp/android-16-1-1-flutter-test-20260825]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Reconstruct exact source, test, analyze, build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          base64 -d build/android_16_1_1_localfirst/final_ci.sh.gz.b64 | gzip -d > /tmp/final_ci.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/final_ci.sh')
+          s=p.read_text()
+          a=s.index("EDGE='https://")
+          b=s.index('flutter create app', a)
+          s=s[:a] + "echo 'SKIP LIVE NETWORK REGRESSION: already verified and CI session revoked'\n" + s[b:]
+          needle='flutter pub get\nflutter analyze --no-fatal-infos --no-fatal-warnings'
+          if needle not in s:
+              raise SystemExit('flutter pub get/analyze marker not found')
+          s=s.replace(needle, 'flutter pub get\nflutter test\nflutter analyze --no-fatal-infos --no-fatal-warnings', 1)
+          p.write_text(s)
+          PY
+          bash /tmp/final_ci.sh | tee /tmp/android-1611-test.log
+          grep -q 'All tests passed' /tmp/android-1611-test.log
+          grep -q 'Built build/app/outputs/flutter-apk/app-release.apk' /tmp/android-1611-test.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-1611-test-proof
+          path: /tmp/android-1611-test.log
+          if-no-files-found: warn
+          retention-days: 1
