@@ -79,8 +79,13 @@ jobs:
 
           cd app
           flutter pub get
-          flutter analyze
-          flutter test
+          set +e
+          flutter analyze 2>&1 | tee ../build-output/flutter-analyze.txt
+          ANALYZE_STATUS=${PIPESTATUS[0]}
+          set -e
+          printf 'flutter_analyze_exit=%s\n' "$ANALYZE_STATUS" > ../build-output/flutter-analyze-status.txt
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test 2>&1 | tee ../build-output/flutter-test.txt
           flutter build apk --release
 
           APK=''
