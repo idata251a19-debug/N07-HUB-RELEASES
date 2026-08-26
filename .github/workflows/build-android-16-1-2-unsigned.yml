@@ -1,0 +1,114 @@
+name: Build Android 16.1.2 Unsigned Final
+
+on:
+  push:
+    branches: [tmp/android-16-1-2-release-build-20260826]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Reconstruct exact 16.1.2+52 source and run QA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          rm -rf /tmp/n07-1612 /tmp/base-artifact app build-output
+          mkdir -p /tmp/n07-1612 /tmp/base-artifact build-output
+
+          # Exact 16.1.1 source artifact retained from the proven build lineage.
+          gh run download 32676064906 -R idata251a19-debug/N07-HUB-RELEASES \
+            -n N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_DELTA_FINAL \
+            -D /tmp/base-artifact
+          unzip -q /tmp/base-artifact/N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_SOURCE.zip -d /tmp/n07-1612
+          ROOT=/tmp/n07-1612/N07_HUBDNI_ANDROID_RC16_SOURCE
+
+          # Apply the three locally-proven patches that reconstruct the final authority source.
+          base64 -d build/android_16_1_2_release/patches.tar.gz.b64 > /tmp/patches.tar.gz
+          echo '5b884fad59e05718c7c671d7ec5a1b151003d5e340592d0252c91b96d9d98d43  /tmp/patches.tar.gz' | sha256sum -c -
+          mkdir -p /tmp/patches
+          tar -xzf /tmp/patches.tar.gz -C /tmp/patches
+          cd "$ROOT"
+          patch --batch -p1 < /tmp/patches/01_cloud_required.diff
+          patch --batch -p6 < /tmp/patches/02_uncertain.diff
+          patch --batch -p6 < /tmp/patches/03_uncertain_coverage.diff
+
+          # Exact final-source critical hashes from N07_ANDROID_16_1_2_FINAL_UNCERTAIN_COVERAGE_PACKAGE.zip.
+          echo '5fdc11decc4fd2331bd7a766968131fd296fe910292e378b10541ac2c81c82f9  lib/main.dart' | sha256sum -c -
+          echo 'a105f609d9bc63db381dcf14cb2fcbc52891ec1b17c014877f0c2676e2b49857  lib/local_store.dart' | sha256sum -c -
+          echo '743c97521ef303e4451dcffbf86b28f02787552ca647f40953febc45fa20bccf  pubspec.yaml' | sha256sum -c -
+          echo '02deb3d11c9357fe727e0aca58f4d832ce1c9c6061787a06c560db97a531eac7  AndroidManifest.xml' | sha256sum -c -
+          echo '96c6b8396dcf5184a682455263d7a593433f0865f8765b1e67d209f934ad4a70  assets/background/n07_background_vertical.jpg' | sha256sum -c -
+          grep -q '^version: 16.1.2+52$' pubspec.yaml
+
+          python3 test/qa_cloud_required_16_1_2.py
+          python3 test/qa_uncertain_mutation_16_1_2.py
+          python3 test/qa_uncertain_full_coverage_16_1_2.py
+          python3 test/qa_backend_hashes_v25.py
+          python3 test/qa_slot_layout_v25.py
+          (cd google_sheet_backend && node ../test/qa_backend_v25.js Code_VF_E2W_V25.gs)
+          (cd google_sheet_backend && node ../test/qa_backend_v25.js Code_AUTO_EV_V25.gs)
+
+          cd "$GITHUB_WORKSPACE"
+          flutter --version | tee build-output/flutter-version.txt
+          java -version 2>&1 | tee build-output/java-version.txt
+
+          flutter create app --platforms=android --org vn.hubdni --project-name n07_hub_v1
+          cp -a "$ROOT"/. app/
+          cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+          rm -f app/test/widget_test.dart.bak
+
+          # Build-only scaffold settings: preserve package name, minSdk and produce UNSIGNED release.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/android/app/build.gradle.kts')
+          s = p.read_text()
+          s = s.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+          s = s.replace('signingConfig = signingConfigs.getByName("debug")', '')
+          p.write_text(s)
+          PY
+
+          cd app
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build apk --release
+
+          APK=''
+          for f in build/app/outputs/flutter-apk/app-release-unsigned.apk build/app/outputs/flutter-apk/app-release.apk; do
+            if [ -f "$f" ]; then APK="$f"; break; fi
+          done
+          test -n "$APK"
+          cp "$APK" ../build-output/N07_HUBDNI_ANDROID_16_1_2_52_UNSIGNED.apk
+          cd ..
+          sha256sum build-output/N07_HUBDNI_ANDROID_16_1_2_52_UNSIGNED.apk | tee build-output/unsigned-apk.sha256
+
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          mkdir -p build-output/apksigner/lib
+          cp "$BT/apksigner" build-output/apksigner/apksigner
+          cp "$BT/lib/apksigner.jar" build-output/apksigner/lib/apksigner.jar
+          printf '%s\n' "$BT" > build-output/apksigner/BUILD_TOOLS_PATH.txt
+          sha256sum build-output/apksigner/apksigner build-output/apksigner/lib/apksigner.jar > build-output/apksigner/SHA256SUMS.txt
+
+          printf '%s\n' 'package=vn.hubdni.n07_hub_v1' 'versionName=16.1.2' 'versionCode=52' > build-output/candidate.txt
+
+      - name: Upload unsigned APK and signing tool
+        uses: actions/upload-artifact@v4
+        with:
+          name: N07_ANDROID_16_1_2_52_UNSIGNED_BUILD
+          path: build-output
+          if-no-files-found: error
+          retention-days: 7
