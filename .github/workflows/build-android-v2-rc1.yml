@@ -54,7 +54,7 @@ jobs:
           python3 test/qa_cloud_required_16_1_2.py
           python3 test/qa_uncertain_mutation_16_1_2.py
           python3 test/qa_uncertain_full_coverage_16_1_2.py
-          python3 test/qa_16_0_6_continuous_scan.py
+          python3 test/qa_android_v2_scanner.py
           python3 test/qa_slot_layout_v25.py
           ! grep -RniE 'adixvii|supabase\.co|functions/v1|eyJhbGci|kSupabaseAnonKey|DB_PASSWORD|TNS_ADMIN' lib pubspec.yaml AndroidManifest.xml
 
