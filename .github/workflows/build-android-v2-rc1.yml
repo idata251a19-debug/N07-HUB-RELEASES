@@ -1,0 +1,103 @@
+name: Build Android N07 V2 RC1
+
+on:
+  push:
+    branches: [tmp/n07-v2-android-rc1-20260827]
+    paths:
+      - build/android_v2/**
+      - .github/workflows/build-android-v2-rc1.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Reconstruct baseline, transform to V2, test and build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          rm -rf /tmp/n07-v2 /tmp/base-artifact /tmp/patches app build-output
+          mkdir -p /tmp/n07-v2 /tmp/base-artifact /tmp/patches build-output
+
+          gh run download 32676064906 -R idata251a19-debug/N07-HUB-RELEASES \
+            -n N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_DELTA_FINAL \
+            -D /tmp/base-artifact
+          unzip -q /tmp/base-artifact/N07_HUBDNI_ANDROID_16_1_1_LOCAL_FIRST_SOURCE.zip -d /tmp/n07-v2
+          ROOT=/tmp/n07-v2/N07_HUBDNI_ANDROID_RC16_SOURCE
+
+          cat build/android_16_1_2_release/patches.part{00..05} | base64 -d > /tmp/patches.tar.gz
+          echo '5b884fad59e05718c7c671d7ec5a1b151003d5e340592d0252c91b96d9d98d43  /tmp/patches.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/patches.tar.gz -C /tmp/patches
+          cd "$ROOT"
+          patch --batch -p1 < /tmp/patches/01_cloud_required.diff
+          patch --batch -p6 < /tmp/patches/02_uncertain.diff
+          patch --batch -p6 < /tmp/patches/03_uncertain_coverage.diff
+          echo '5fdc11decc4fd2331bd7a766968131fd296fe910292e378b10541ac2c81c82f9  lib/main.dart' | sha256sum -c -
+          echo 'a105f609d9bc63db381dcf14cb2fcbc52891ec1b17c014877f0c2676e2b49857  lib/local_store.dart' | sha256sum -c -
+
+          cd "$GITHUB_WORKSPACE"
+          python3 build/android_v2/transform_v2.py "$ROOT"
+          cd "$ROOT"
+          python3 test/qa_android_v2_oracle_transport.py
+          python3 test/qa_cloud_required_16_1_2.py
+          python3 test/qa_uncertain_mutation_16_1_2.py
+          python3 test/qa_uncertain_full_coverage_16_1_2.py
+          python3 test/qa_16_0_6_continuous_scan.py
+          python3 test/qa_slot_layout_v25.py
+          ! grep -RniE 'adixvii|supabase\.co|functions/v1|eyJhbGci|kSupabaseAnonKey|DB_PASSWORD|TNS_ADMIN' lib pubspec.yaml AndroidManifest.xml
+
+          cd "$GITHUB_WORKSPACE"
+          flutter --version | tee build-output/flutter-version.txt
+          java -version 2>&1 | tee build-output/java-version.txt
+          flutter create app --platforms=android --org vn.hubdni --project-name n07_v2
+          cp -a "$ROOT"/. app/
+          cp app/AndroidManifest.xml app/android/app/src/main/AndroidManifest.xml
+          rm -f app/test/widget_test.dart.bak
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/android/app/build.gradle.kts')
+          s=p.read_text()
+          s=s.replace('minSdk = flutter.minSdkVersion','minSdk = 23')
+          s=s.replace('signingConfig = signingConfigs.getByName("debug")','')
+          p.write_text(s)
+          PY
+
+          cd app
+          flutter pub get
+          flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | tee ../build-output/flutter-analyze.txt
+          flutter test 2>&1 | tee ../build-output/flutter-test.txt
+          flutter build apk --release --dart-define=N07_V2_API_URL=https://n07-v2.invalid/ords/n07v2/api
+          APK=''
+          for f in build/app/outputs/flutter-apk/app-release-unsigned.apk build/app/outputs/flutter-apk/app-release.apk; do
+            if [ -f "$f" ]; then APK="$f"; break; fi
+          done
+          test -n "$APK"
+          cp "$APK" ../build-output/N07_V2_ANDROID_RC1_UNSIGNED.apk
+          cd ..
+          sha256sum build-output/N07_V2_ANDROID_RC1_UNSIGNED.apk | tee build-output/unsigned-apk.sha256
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BT/aapt2" dump packagename build-output/N07_V2_ANDROID_RC1_UNSIGNED.apk | tee build-output/aapt2-package.txt
+          grep -q 'vn.hubdni.n07_v2' build-output/aapt2-package.txt
+          printf 'expectedPackage=vn.hubdni.n07_v2\nversionName=2.0.0\nversionCode=1\napiUrlBuildMode=placeholder-not-runtime-ready\n' > build-output/candidate.txt
+          (cd "$ROOT" && zip -qr "$GITHUB_WORKSPACE/build-output/N07_V2_ANDROID_RC1_SOURCE.zip" .)
+          sha256sum build-output/N07_V2_ANDROID_RC1_SOURCE.zip | tee build-output/source.sha256
+
+      - name: Upload V2 unsigned build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: N07_V2_ANDROID_RC1_UNSIGNED_BUILD
+          path: build-output
+          if-no-files-found: error
+          retention-days: 7
